@@ -9,6 +9,7 @@ dist/
 .env
 .env.local
 .env.*.local
+.venv/
 
 # Logs and debug
 *.log

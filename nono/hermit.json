@@ -11,7 +11,7 @@
     "groups": ["node_runtime", "unlink_protection"]
   },
   "filesystem": {
-    "read": ["$HOME/.config/git"],
+    "read": ["$HOME/.config/git","/home/linuxbrew/.linuxbrew"],
     "read_file": ["$HOME/.gitconfig"]
   },
   "network": {
