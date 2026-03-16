@@ -3,7 +3,7 @@ id: co-raidyn
 type: company
 name: Raidyn
 status: active
-updated_at: 2026-03-16T20:57:48.367Z
+updated_at: 2026-03-16T21:27:26.060Z
 source_refs:
   - type: chat
     date: 2026-03-16
@@ -23,6 +23,9 @@ source_refs:
     urls:
       - https://be.linkedin.com/company/raidyn
       - https://obra.studio/work/raidyn/
+  - type: chat
+    date: 2026-03-16
+    note: "User said the next major company priority is finding and validating a new vertical beyond steel wire ropes, including product-market-fit analysis and workspace tracking of contacts and outreach."
 ---
 
 ## Summary
@@ -112,8 +115,9 @@ Website-listed leadership and team members reviewed:
 ## Priorities
 
 - Turn this public company context into a sharper internal operating picture.
-- Confirm the real near-term business priorities, customers, and active initiatives.
-- Capture the first concrete analysis request against a real business problem.
+- Identify and validate the next vertical for Raidyn beyond steel wire ropes.
+- Compare new vertical candidates against the current steel wire rope case using explicit business and product criteria.
+- Build durable workspace tracking for candidate verticals, contacts, and outreach history.
 
 ## Constraints
 
