@@ -4,7 +4,7 @@ type: agent
 name: Business Analyst Agent
 status: active
 owner: Business Analyst
-updated_at: 2026-03-16T21:18:31.912Z
+updated_at: 2026-03-16T20:57:48.367Z
 last_strategic_review: 2026-03-16
 source_refs:
   - type: chat
@@ -16,6 +16,9 @@ source_refs:
   - type: telemetry
     date: 2026-03-16
     note: Strategic review checked .hermit/telemetry/reports (none present), read recent raw telemetry events for 2026-03-16, and ran doctor.
+  - type: chat
+    date: 2026-03-16
+    note: "User set the active business-analysis priority: identify and validate a new vertical beyond steel wire ropes, compare candidates against the current steel wire rope case, and build workspace tracking for contacts and outreach."
 ---
 
 ## Summary
@@ -24,15 +27,18 @@ Business analysis operating system for Raidyn. Maintains clarity on requirements
 
 ## Active Projects
 
-- Establish the first real Raidyn business analysis request.
+- Find and validate the next vertical beyond steel wire ropes.
 
 ## Next Actions
 
-- At the next interactive session, ask the user for their role at Raidyn and the first concrete business analysis priority.
+- At the next working session, define the evaluation criteria for selecting a new vertical.
+- Propose the first shortlist of candidate verticals and compare them against the steel wire rope baseline.
+- Design explorer-friendly workspace tracking for prospects, contacts, and outreach history.
 
 ## Waiting For
 
-- None yet.
+- User to add the most important Raidyn Figma files.
+- Future decision on whether to add Slack exports or read-only Slack access.
 
 ## Calendar
 
@@ -81,9 +87,9 @@ Business analysis operating system for Raidyn. Maintains clarity on requirements
 
 ### 2026-03-16
 
-- Goal clarity: The workspace goal is still only partially specific. The setup goal is complete enough, but the first real Raidyn business analysis priority is still missing from disk. The user's name and role at Raidyn also remain uncaptured.
-- Effort alignment: Git history since the previous strategic-review commit shows effort concentrated in the expected areas: prompt/bootstrap files, role scaffolding, and today's Raidyn records. That was the right place to invest during setup, but the next highest-leverage move is now capturing a live business problem rather than doing more infrastructure work.
-- Organizational fitness: The current structure is fit for purpose. The user, company, work-item, and business-analyst role records are enough to start real analysis work. No new entity type is clearly needed yet.
+- Goal clarity: The workspace goal is now materially clearer. The top business-analysis priority is to identify and validate a new vertical for Raidyn beyond steel wire ropes and to manage the supporting contact and outreach tracking inside the workspace.
+- Effort alignment: Bootstrap work is no longer the bottleneck. The highest-leverage next step is setting the decision framework for vertical selection and then building evidence against it.
+- Organizational fitness: The current structure is good enough to start, but the user has now explicitly asked for explorer-friendly tracking tables for contacts and outreach. That likely needs a small structured file layer around the new work item.
 - Process and prompt quality: Two process gaps surfaced. First, strategic review guidance expects telemetry reports that were not present. Second, search guidance over-assumes `rg` availability; this review hit a real tool error because the environment lacks it.
 - Telemetry and health: No telemetry reports were available under `.hermit/telemetry/reports/`. Raw events show no retry or compaction pattern yet, but they do show slow external-tool usage, repeated silent tool-only turns, and one current-session bash tool error from `rg` being unavailable. `doctor` was run today, but it did not provide a useful visible validation summary here.
-- Research and skill gaps: No external web research is needed for the strategic decision right now. The missing leverage is internal direction, not external market knowledge. The immediate gap is better review instrumentation and environment-aware command guidance.
+- Research and skill gaps: No external market conclusion should be drawn yet. The immediate analytical gap is not idea generation but defining the selection criteria, evidence model, and tracking structure for the new-vertical search.
