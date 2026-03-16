@@ -10,7 +10,7 @@ source_refs:
     note: User identified the workspace company as Raidyn during bootstrap.
   - type: web
     date: 2026-03-16
-    note: Raidyn website pages reviewed: About Us, Technology, Product, Applications, AIM Consortium.
+    note: "Raidyn website pages reviewed: About Us, Technology, Product, Applications, AIM Consortium."
     urls:
       - https://www.raidyn.ai/about-us
       - https://www.raidyn.ai/technology
