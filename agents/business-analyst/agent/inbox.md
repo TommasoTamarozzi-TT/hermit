@@ -4,7 +4,7 @@ type: agent-inbox
 name: Business Analyst Agent Inbox
 status: active
 owner: Business Analyst
-updated_at: 2026-03-16T20:57:48.367Z
+updated_at: 2026-03-16T21:18:31.912Z
 source_refs:
   - type: chat
     date: 2026-03-16
@@ -12,6 +12,9 @@ source_refs:
   - type: chat
     date: 2026-03-16
     note: User plans to add Figma files in coming days and asked for a reminder tomorrow morning.
+  - type: strategic_review
+    date: 2026-03-16
+    note: Review promoted the Figma reminder to the agent calendar and captured follow-up items for user review.
 ---
 
 ## Purpose
@@ -21,12 +24,22 @@ This file is for the role's internal task capture, not for uncategorized user-dr
 
 ## Open Inbox Items
 
-- captured_at: 2026-03-16T20:57:48.367Z
-  source: chat
-  raw_input: Remind me tomorrow morning to add the Figma files.
-  desired_outcome: Surface a reminder on 2026-03-17 in the morning Brussels time so the user remembers to add the most important Raidyn Figma files.
-  why_it_matters: Figma may contain product, strategy, and design context that will improve the Raidyn company record and future analysis.
+- captured_at: 2026-03-16T21:18:31.912Z
+  source: strategic_review
+  raw_input: User-review follow-up: ensure a telemetry report exists before strategic review, or update the strategic review prompt/process to handle missing reports explicitly.
+  desired_outcome: Future strategic reviews can read fresh telemetry summaries without manual raw-event inspection.
+  why_it_matters: Today's review found no files under `.hermit/telemetry/reports/` even though the prompt requires them, which reduced confidence and added avoidable manual work.
   notify: user
-  not_before: 2026-03-17 morning Europe/Brussels
-  due_at: 2026-03-17 morning Europe/Brussels
+  not_before:
+  due_at:
+  status: open
+
+- captured_at: 2026-03-16T21:18:31.912Z
+  source: strategic_review
+  raw_input: User-review follow-up: adjust environment or prompt guidance so command suggestions do not assume `rg` is installed in `nono`.
+  desired_outcome: Future sessions avoid avoidable bash tool errors when searching the workspace.
+  why_it_matters: Today's strategic review hit `/bin/bash: rg: command not found`, which is friction from guidance not matching the actual environment.
+  notify: user
+  not_before:
+  due_at:
   status: open
