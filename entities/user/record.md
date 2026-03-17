@@ -13,6 +13,9 @@ source_refs:
   - type: chat
     date: 2026-03-16
     note: "User set the Business Analyst as their top business analyst and said the current top priority is finding and validating a new vertical beyond steel wire ropes, including product-market-fit analysis, contact tracking, and comparison against the steel wire rope case."
+  - type: chat
+    date: 2026-03-17
+    note: User requested a Secretary role to manage travel planning, including hotels, flights, cars, links, and schedules.
 ---
 
 ## Summary
