@@ -4,8 +4,8 @@ type: agent
 name: Business Analyst Agent
 status: active
 owner: Business Analyst
-updated_at: 2026-03-16T20:57:48.367Z
-last_strategic_review: 2026-03-16
+updated_at: 2026-03-17T12:20:42Z
+last_strategic_review: 2026-03-17
 source_refs:
   - type: chat
     date: 2026-03-16
@@ -19,6 +19,12 @@ source_refs:
   - type: chat
     date: 2026-03-16
     note: "User set the active business-analysis priority: identify and validate a new vertical beyond steel wire ropes, compare candidates against the current steel wire rope case, and build workspace tracking for contacts and outreach."
+  - type: git
+    date: 2026-03-17
+    note: Strategic review inspected commits and diffs since the previous review to verify which canonical files changed and whether work shifted from bootstrap into the live next-vertical initiative.
+  - type: telemetry
+    date: 2026-03-17
+    note: Strategic review checked .hermit/telemetry/reports again, found the directory absent, and reran doctor, which again did not yield a useful visible health summary.
 ---
 
 ## Summary
@@ -31,9 +37,9 @@ Business analysis operating system for Raidyn. Maintains clarity on requirements
 
 ## Next Actions
 
-- At the next working session, define the evaluation criteria for selecting a new vertical.
-- Propose the first shortlist of candidate verticals and compare them against the steel wire rope baseline.
-- Design explorer-friendly workspace tracking for prospects, contacts, and outreach history.
+- Confirm the selection criteria, internal constraints, and early proof signals for the next-vertical search.
+- Draft the first work-item-local tracking structure for candidate verticals, target accounts, contacts, and outreach history.
+- Build the first candidate shortlist and compare it against the steel wire rope baseline.
 
 ## Waiting For
 
@@ -42,7 +48,7 @@ Business analysis operating system for Raidyn. Maintains clarity on requirements
 
 ## Calendar
 
-- 2026-03-17 morning Europe/Brussels — remind the user to add the most important Raidyn Figma files.
+- None scheduled.
 
 ## Someday Or Maybe
 
@@ -83,7 +89,58 @@ Business analysis operating system for Raidyn. Maintains clarity on requirements
   - Next decision:
     - Capture user-review follow-ups to improve telemetry-report availability before strategic reviews and to align search-command guidance with the actual `nono` environment.
 
+- Date: 2026-03-17
+  - Evidence:
+    - Git history since the previous review shows the expected move away from generic setup into live-work capture: `entities/user/record.md`, `entities/companies/co-raidyn/record.md`, `entities/work-items/wi-find-and-validate-the-next-vertical-beyond-steel-wire-ropes/record.md`, and `agents/business-analyst/agent/record.md` changed, while no new role scaffolding was added beyond session logs.
+    - The active work item for the next-vertical search now exists on disk and the agent record's active project points to it.
+    - The first interactive session today surfaced the due Figma reminder, so the outstanding blocker is not the reminder itself but missing decision criteria and internal constraints for the vertical search.
+  - Hypothesis:
+    - Yesterday's review successfully shifted the workspace from bootstrap mode into a real analysis initiative, and the next leverage now comes from defining the decision framework rather than adding more setup files.
+  - Test:
+    - Compare the files changed since the previous review against yesterday's expected areas and inspect whether current next actions are analysis-facing rather than setup-facing.
+  - Expected signal:
+    - Canonical files should show one active business-analysis initiative, no further bootstrap sprawl, and next actions focused on evaluation criteria, evidence, and tracking.
+  - Relevant files or workflows:
+    - `agents/business-analyst/agent/record.md`
+    - `entities/user/record.md`
+    - `entities/companies/co-raidyn/record.md`
+    - `entities/work-items/wi-find-and-validate-the-next-vertical-beyond-steel-wire-ropes/record.md`
+    - Git commits `af5936a..HEAD`
+  - Result:
+    - Confirmed. The workspace is now oriented around a concrete initiative. The remaining gap is analytical structure, not missing scaffolding.
+  - Next decision:
+    - Keep the next substantive work focused on selection criteria, evidence standards, and lightweight tracking files for this initiative.
+
+- Date: 2026-03-17
+  - Evidence:
+    - `.hermit/telemetry/reports/` is still absent today.
+    - Rerunning `doctor` again produced only the auto-selected-model info line and no useful visible health summary.
+    - The most inspectable recent traces are still git history and role session logs, not telemetry reports.
+  - Hypothesis:
+    - Review-health friction remains a tooling/process gap, not a one-off omission from yesterday.
+  - Test:
+    - Re-check the report path first, then rerun `doctor` to see whether a report or visible summary is now available.
+  - Expected signal:
+    - Either a report file exists or `doctor` emits an actionable workspace-health summary in-session.
+  - Relevant files or workflows:
+    - `.hermit/telemetry/reports/`
+    - `npm run cli -- doctor`
+    - Strategic-review workflow
+  - Result:
+    - Not confirmed. The same gap persists, so review-health evidence is still weaker than the prompt expects.
+  - Next decision:
+    - Keep the telemetry-report and environment-guidance follow-ups open for user review, and avoid over-claiming health insights until the reporting path is reliable.
+
 ## Strategic Observations
+
+### 2026-03-17
+
+- Goal clarity: Yesterday's missing-live-priority gap is mostly closed. The active initiative is now captured in `entities/work-items/wi-find-and-validate-the-next-vertical-beyond-steel-wire-ropes/record.md`, but two decision-shaping facts are still missing: the user's role at Raidyn and the internal selection constraints for the next-vertical search.
+- Effort alignment: Git history since the previous review shows the expected shift away from generic bootstrap into real-work capture. No meaningful progress exists yet on evaluation criteria or tracking files, so the next session should start there rather than on more setup.
+- Organizational fitness: The current role and entity structure is still adequate to start because only one initiative needs outreach tracking right now. A work-item-local tracking layer is the lowest-risk next step; if the same pattern spreads across multiple initiatives, shared prospect or contact entities should be proposed for user review instead of added by default.
+- Process and prompt quality: The two review-friction issues from yesterday remain open and unchanged. Strategic-review guidance still expects telemetry reports that are not being produced here, and environment guidance still risks suggesting unavailable commands in `nono`.
+- Telemetry and health: `.hermit/telemetry/reports/` is still absent, and rerunning `doctor` again produced no useful visible health summary. Git history and role session files are enough to inspect activity, but not enough for the level of health visibility the prompt currently assumes.
+- Research and skill gaps: No web search was warranted today. Local evidence is sufficient to conclude that the missing leverage is a decision framework and lightweight data model for the next-vertical search, not outside market facts or a missing external skill.
 
 ### 2026-03-16
 
