@@ -5,9 +5,9 @@
   "type": "module",
   "packageManager": "npm@11.6.2",
   "scripts": {
-    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --port 4321 --strictPort",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
-    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --port 4321 --strictPort"
   },
   "dependencies": {
     "astro": "^4.16.0",
