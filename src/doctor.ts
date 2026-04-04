@@ -226,6 +226,10 @@ function printFindings(root: string, findings: DoctorFinding[]): void {
   }
 }
 
+export function doctorFindingsAreHealthy(findings: ReadonlyArray<{ level: DoctorFinding["level"] }>): boolean {
+  return findings.every((finding) => finding.level === "info");
+}
+
 async function validateHermitAgentFiles(
   findings: DoctorFinding[],
   root: string,
@@ -275,8 +279,9 @@ export async function runDoctor(root: string, roleId: string): Promise<boolean> 
       addGeneralFinding(findings, diagnostic.level, diagnostic.message);
     }
 
-    if (findings.length === 0) {
+    if (doctorFindingsAreHealthy(findings)) {
       console.log("doctor: workspace looks healthy");
+      printFindings(root, findings);
       return true;
     }
 
@@ -421,8 +426,9 @@ export async function runDoctor(root: string, roleId: string): Promise<boolean> 
     addGeneralFinding(findings, diagnostic.level, diagnostic.message);
   }
 
-  if (findings.length === 0) {
+  if (doctorFindingsAreHealthy(findings)) {
     console.log("doctor: workspace looks healthy");
+    printFindings(root, findings);
     return true;
   }
 

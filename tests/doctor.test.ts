@@ -3,7 +3,7 @@ import path from "node:path";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 
-import { printDoctorContext, runDoctor } from "../src/doctor.js";
+import { doctorFindingsAreHealthy, printDoctorContext, runDoctor } from "../src/doctor.js";
 import { loadRole } from "../src/roles.js";
 import { ensureWorkspaceScaffold } from "../src/workspace.js";
 import { seedRoleWorkspace, writeSharedEntityRecord } from "./test-helpers.js";
@@ -15,6 +15,14 @@ function replaceInFile(filePath: string, oldText: string, newText: string): void
 
 describe("runDoctor", () => {
   let consoleSpy: { log: ReturnType<typeof vi.spyOn> };
+
+  it("treats info-only findings as healthy for summary purposes", () => {
+    expect(doctorFindingsAreHealthy([])).toBe(true);
+    expect(doctorFindingsAreHealthy([{ level: "info" }])).toBe(true);
+    expect(doctorFindingsAreHealthy([{ level: "info" }, { level: "info" }])).toBe(true);
+    expect(doctorFindingsAreHealthy([{ level: "warning" }])).toBe(false);
+    expect(doctorFindingsAreHealthy([{ level: "error" }])).toBe(false);
+  });
 
   beforeEach(() => {
     consoleSpy = { log: vi.spyOn(console, "log").mockImplementation(() => {}) };
