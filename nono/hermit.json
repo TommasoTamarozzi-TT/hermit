@@ -29,7 +29,8 @@
       "api.cerebras.ai",
       "api.telegram.org",
       "login.microsoftonline.com",
-      "graph.microsoft.com"
+      "graph.microsoft.com",
+      "slack.com"
     ]
   }
 }
