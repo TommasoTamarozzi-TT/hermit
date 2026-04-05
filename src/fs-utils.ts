@@ -1,4 +1,6 @@
 import { promises as fs } from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
 export function getErrorCode(error: unknown): string | undefined {
   return error && typeof error === "object" && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
@@ -23,4 +25,9 @@ export async function fileExists(filePath: string): Promise<boolean> {
     }
     throw error;
   }
+}
+
+export function formatPathForDisplay(filePath: string, cwd = process.cwd()): string {
+  const relative = path.relative(cwd, filePath);
+  return relative.length > 0 ? relative : ".";
 }

@@ -2,7 +2,6 @@
 
 import "dotenv/config";
 import { Command } from "commander";
-import path from "node:path";
 import process from "node:process";
 
 import {
@@ -16,6 +15,7 @@ import {
 } from "./cli-session.js";
 import { DEFAULT_HEARTBEAT_DAEMON_INTERVAL } from "./heartbeat-daemon.js";
 import { printDoctorContext, runDoctor } from "./doctor.js";
+import { formatPathForDisplay } from "./fs-utils.js";
 import { assertProviderAwareModelConfigured } from "./model-auth.js";
 import { createRoleSession } from "./session-runtime.js";
 import { generateTelemetryReport, renderTelemetryReportSummary, writeTelemetryReport } from "./telemetry-report.js";
@@ -132,8 +132,8 @@ telemetryCommand
     });
     const paths = await writeTelemetryReport(root, report);
     console.log(renderTelemetryReportSummary(report));
-    console.log(`- Markdown report: ${path.relative(root, paths.markdownPath)}`);
-    console.log(`- JSON report: ${path.relative(root, paths.jsonPath)}`);
+    console.log(`- Markdown report: ${formatPathForDisplay(paths.markdownPath)}`);
+    console.log(`- JSON report: ${formatPathForDisplay(paths.jsonPath)}`);
   });
 
 program

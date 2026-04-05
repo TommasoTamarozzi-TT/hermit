@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
+import { formatPathForDisplay } from "../src/fs-utils.js";
 import { TelemetryRecorder } from "../src/telemetry-recorder.js";
 import { generateTelemetryReport, renderTelemetryReportSummary, writeTelemetryReport } from "../src/telemetry-report.js";
 
@@ -115,6 +116,14 @@ describe("telemetry", () => {
       checkpointBeforeSha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       checkpointAfterSha: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
+  });
+
+  it("formats telemetry report paths relative to the current working directory", () => {
+    const workspaceRoot = "/tmp/hermit/workspace";
+    const reportPath = path.join(workspaceRoot, ".hermit", "telemetry", "reports", "report.md");
+
+    expect(formatPathForDisplay(reportPath, "/tmp/hermit")).toBe("workspace/.hermit/telemetry/reports/report.md");
+    expect(formatPathForDisplay(reportPath, workspaceRoot)).toBe(".hermit/telemetry/reports/report.md");
   });
 
   it("aggregates telemetry into a report and writes markdown and json outputs", async () => {
