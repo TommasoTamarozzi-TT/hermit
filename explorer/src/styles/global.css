@@ -130,11 +130,12 @@
   }
 
   .app-header-inner {
-    @apply mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8;
+    width: min(98vw, 1880px);
+    @apply mx-auto flex items-center justify-between gap-3 px-3 py-4 sm:px-4 lg:px-6;
   }
 
   .brand-link {
-    @apply shrink-0 text-sm font-semibold tracking-[0.12em] no-underline;
+    @apply text-[0.72rem] font-semibold leading-tight tracking-[0.14em] no-underline;
     color: var(--color-brand);
   }
 
@@ -198,7 +199,8 @@
   }
 
   .page-shell {
-    @apply mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10;
+    width: min(98vw, 1880px);
+    @apply mx-auto px-3 py-8 sm:px-4 lg:px-6 lg:py-10;
   }
 
   .page-intro {
@@ -373,13 +375,22 @@
   }
 
   .table-wrap {
-    @apply overflow-x-auto rounded-2xl shadow-sm;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    @apply rounded-2xl shadow-sm;
     border: 1px solid var(--color-border);
     background: var(--color-surface);
   }
 
   .table-wrap--compact {
     max-width: 100%;
+  }
+
+  .table-wrap--operational {
+    margin-inline: 0;
   }
 
   table {
@@ -480,12 +491,20 @@
     @apply px-6 py-5;
   }
 
+  .foldable-body--flush {
+    padding: 0;
+  }
+
   .foldable-body > .meta {
     @apply mb-4;
   }
 
+  .operational-foldable .foldable-summary {
+    cursor: pointer;
+  }
+
   .operational-meta {
-    @apply px-6 pt-5;
+    @apply px-4 pt-4 sm:px-5;
   }
 
   .operational-meta p {
@@ -493,20 +512,27 @@
   }
 
   .operational-table {
-    width: 100%;
-    table-layout: fixed;
-    font-size: 0.9rem;
-    line-height: 1.45;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+    font-size: 0.84rem;
+    line-height: 1.35;
   }
 
   .operational-table th,
   .operational-table td {
-    padding: 0.7rem 0.75rem;
+    min-width: 8rem;
+    padding: 0.55rem 0.6rem;
     vertical-align: top;
   }
 
+  .operational-table th:first-child,
+  .operational-table td:first-child {
+    min-width: 11rem;
+  }
+
   .operational-table th {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
   }
 
   .operational-table td {
@@ -515,11 +541,21 @@
   }
 
   .operational-table td a {
-    font-size: 0.92em;
+    font-size: 0.88em;
   }
 
   .operational-table strong {
     color: var(--color-heading);
+  }
+
+  .operational-notes {
+    @apply px-4 py-5 sm:px-5;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .operational-links {
+    @apply px-4 pb-5 pt-2 text-sm sm:px-5;
+    color: var(--color-text-soft);
   }
 }
 
@@ -529,11 +565,17 @@
   }
 
   .operational-table {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
   }
 
   .operational-table th,
   .operational-table td {
-    padding: 0.6rem 0.55rem;
+    min-width: 7rem;
+    padding: 0.5rem;
+  }
+
+  .operational-table th:first-child,
+  .operational-table td:first-child {
+    min-width: 9rem;
   }
 }
