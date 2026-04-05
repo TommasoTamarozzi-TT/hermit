@@ -27,7 +27,9 @@
       "api.x.ai",
       "api.mistral.ai",
       "api.cerebras.ai",
-      "api.telegram.org"
+      "api.telegram.org",
+      "login.microsoftonline.com",
+      "graph.microsoft.com"
     ]
   }
 }
