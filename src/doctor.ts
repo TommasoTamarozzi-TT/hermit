@@ -66,12 +66,44 @@ function extractTemplatePlaceholderCandidates(content: string): string[] {
   ];
 }
 
+function collectFrontmatterPlaceholderCandidates(value: unknown, pathSegments: string[] = []): string[] {
+  if (pathSegments[0] === "source_refs" && pathSegments[pathSegments.length - 1] === "note") {
+    return [];
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? [trimmed] : [];
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return [String(value)];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectFrontmatterPlaceholderCandidates(item, pathSegments));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, nestedValue]) =>
+      collectFrontmatterPlaceholderCandidates(nestedValue, [...pathSegments, key]),
+    );
+  }
+
+  return [];
+}
+
 function extractPlaceholderLines(content: string, templatePlaceholderCandidates: readonly string[] = []): string[] {
   const templateCandidateSet = new Set(templatePlaceholderCandidates);
+  const parsed = matter(content);
+  const scannableLines = [
+    ...parsed.content.split(/\r?\n/),
+    ...collectFrontmatterPlaceholderCandidates(parsed.data),
+  ];
+
   return [
     ...new Set(
-      content
-        .split(/\r?\n/)
+      scannableLines
         .map((line) => line.trim())
         .filter((line) =>
           UNRESOLVED_TEMPLATE_PATTERN.test(line)
