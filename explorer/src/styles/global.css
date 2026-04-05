@@ -3,13 +3,78 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --app-background: radial-gradient(circle at top, rgba(14, 165, 233, 0.1), transparent 34%), linear-gradient(to bottom, #f8fafc, #f1f5f9);
+    --color-body-bg: #f1f5f9;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f8fafc;
+    --color-surface-subtle: rgba(248, 250, 252, 0.7);
+    --color-border: rgba(226, 232, 240, 0.9);
+    --color-border-strong: #cbd5e1;
+    --color-text: #0f172a;
+    --color-text-soft: #64748b;
+    --color-heading: #020617;
+    --color-link: #0369a1;
+    --color-link-hover: #0c4a6e;
+    --color-accent: #0ea5e9;
+    --color-accent-soft: rgba(14, 165, 233, 0.16);
+    --color-nav-bg: rgba(2, 6, 23, 0.9);
+    --color-nav-border: rgba(255, 255, 255, 0.1);
+    --color-nav-text: #cbd5e1;
+    --color-nav-hover-text: #ffffff;
+    --color-nav-hover-bg: rgba(255, 255, 255, 0.1);
+    --color-brand: #ffffff;
+    --color-input-bg: #ffffff;
+    --color-selection-bg: #bae6fd;
+    --color-selection-text: #020617;
+    --color-table-hover: rgba(248, 250, 252, 0.8);
+    --color-code-bg: #f1f5f9;
+    --color-pre-bg: #f8fafc;
+    --color-shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
+  }
+
+  html[data-theme="raidyn"] {
+    color-scheme: dark;
+    --app-background: radial-gradient(circle at top, rgba(249, 115, 22, 0.18), transparent 34%), linear-gradient(to bottom, #17120e, #0e0b09);
+    --color-body-bg: #0e0b09;
+    --color-surface: #1a140f;
+    --color-surface-muted: #241b14;
+    --color-surface-subtle: rgba(36, 27, 20, 0.88);
+    --color-border: rgba(120, 77, 41, 0.55);
+    --color-border-strong: #784d29;
+    --color-text: #f5ebe3;
+    --color-text-soft: #cfb29c;
+    --color-heading: #fff7ed;
+    --color-link: #fb923c;
+    --color-link-hover: #fdba74;
+    --color-accent: #f97316;
+    --color-accent-soft: rgba(249, 115, 22, 0.2);
+    --color-nav-bg: rgba(10, 8, 7, 0.92);
+    --color-nav-border: rgba(251, 146, 60, 0.18);
+    --color-nav-text: #f3d5c0;
+    --color-nav-hover-text: #fff7ed;
+    --color-nav-hover-bg: rgba(249, 115, 22, 0.16);
+    --color-brand: #fff7ed;
+    --color-input-bg: #241b14;
+    --color-selection-bg: rgba(249, 115, 22, 0.35);
+    --color-selection-text: #fff7ed;
+    --color-table-hover: rgba(249, 115, 22, 0.08);
+    --color-code-bg: #2a2018;
+    --color-pre-bg: #241b14;
+    --color-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+
   html {
     @apply scroll-smooth;
+    background: var(--color-body-bg);
   }
 
   body {
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    @apply min-h-screen bg-slate-100 text-slate-900 antialiased;
+    @apply min-h-screen antialiased;
+    background: var(--color-body-bg);
+    color: var(--color-text);
   }
 
   code,
@@ -20,33 +85,112 @@
   }
 
   ::selection {
-    @apply bg-sky-200 text-slate-950;
+    background: var(--color-selection-bg);
+    color: var(--color-selection-text);
   }
 
   a {
-    @apply text-sky-700 transition-colors duration-150;
+    color: var(--color-link);
+    @apply transition-colors duration-150;
   }
 
   a:hover {
-    @apply text-sky-900;
+    color: var(--color-link-hover);
   }
 
   h1 {
-    @apply text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl;
+    @apply text-3xl font-semibold tracking-tight sm:text-4xl;
+    color: var(--color-heading);
   }
 
   h2 {
-    @apply text-xl font-semibold tracking-tight text-slate-950;
+    @apply text-xl font-semibold tracking-tight;
+    color: var(--color-heading);
   }
 
   h3 {
-    @apply text-base font-semibold text-slate-900;
+    @apply text-base font-semibold;
+    color: var(--color-heading);
   }
 }
 
 @layer components {
+  .app-shell {
+    min-height: 100vh;
+    background: var(--app-background);
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--color-nav-border);
+    background: var(--color-nav-bg);
+    backdrop-filter: blur(18px);
+  }
+
+  .app-header-inner {
+    @apply mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8;
+  }
+
+  .brand-link {
+    @apply shrink-0 text-sm font-semibold tracking-[0.12em] no-underline;
+    color: var(--color-brand);
+  }
+
+  .header-actions {
+    @apply flex items-center gap-3;
+  }
+
+  .theme-switcher {
+    @apply flex items-center gap-2;
+  }
+
+  .theme-switcher__label {
+    @apply hidden text-xs font-medium uppercase tracking-[0.12em] sm:inline;
+    color: var(--color-nav-text);
+  }
+
+  .theme-select {
+    @apply rounded-full border px-3 py-1.5 text-sm outline-none transition;
+    border-color: var(--color-border);
+    background: var(--color-input-bg);
+    color: var(--color-text);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .theme-select:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px var(--color-accent-soft);
+  }
+
+  .mobile-menu-button {
+    @apply list-none cursor-pointer rounded-lg border px-3 py-2 transition [&::-webkit-details-marker]:hidden;
+    border-color: var(--color-nav-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-nav-text);
+  }
+
+  .mobile-menu-button:hover {
+    background: var(--color-nav-hover-bg);
+    color: var(--color-nav-hover-text);
+  }
+
+  .mobile-menu-panel {
+    @apply absolute right-0 z-30 mt-2 min-w-[14rem] rounded-xl p-2 shadow-lg;
+    border: 1px solid var(--color-nav-border);
+    background: var(--color-nav-bg);
+    backdrop-filter: blur(18px);
+  }
+
   .nav-link {
-    @apply rounded-full px-3 py-1.5 text-sm font-medium text-slate-300 no-underline transition hover:bg-white/10 hover:text-white;
+    @apply rounded-full px-3 py-1.5 text-sm font-medium no-underline transition;
+    color: var(--color-nav-text);
+  }
+
+  .nav-link:hover {
+    background: var(--color-nav-hover-bg);
+    color: var(--color-nav-hover-text);
   }
 
   .nav-link--stacked {
@@ -62,31 +206,45 @@
   }
 
   .breadcrumb {
-    @apply mb-4 flex flex-wrap items-center gap-2 text-sm text-slate-500;
+    @apply mb-4 flex flex-wrap items-center gap-2 text-sm;
+    color: var(--color-text-soft);
   }
 
   .breadcrumb a {
-    @apply text-slate-500 no-underline hover:text-slate-700;
+    color: var(--color-text-soft);
+    @apply no-underline;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-heading);
   }
 
   .meta {
-    @apply text-sm text-slate-500;
+    @apply text-sm;
+    color: var(--color-text-soft);
   }
 
   .section-title {
-    @apply mb-3 text-lg font-semibold tracking-tight text-slate-950;
+    @apply mb-3 text-lg font-semibold tracking-tight;
+    color: var(--color-heading);
   }
 
   .card {
-    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-panel;
+    @apply overflow-hidden rounded-2xl shadow-panel;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--color-shadow-soft);
   }
 
   .file-section {
     @apply mb-6;
   }
 
+  .file-section > h2,
   .file-section > h3 {
-    @apply border-b border-slate-200 bg-slate-50/70 px-6 py-4;
+    @apply border-b px-6 py-4;
+    border-color: var(--color-border);
+    background: var(--color-surface-subtle);
   }
 
   .file-section > .markdown-body,
@@ -102,11 +260,14 @@
   }
 
   .meta-list {
-    @apply grid gap-x-4 gap-y-2 border-b border-slate-100 text-sm text-slate-600 sm:grid-cols-[minmax(160px,auto)_1fr];
+    @apply grid gap-x-4 gap-y-2 border-b text-sm sm:grid-cols-[minmax(160px,auto)_1fr];
+    border-color: var(--color-border);
+    color: var(--color-text-soft);
   }
 
   .meta-list dt {
-    @apply font-semibold text-slate-900;
+    color: var(--color-heading);
+    @apply font-semibold;
   }
 
   .meta-list dd {
@@ -114,23 +275,32 @@
   }
 
   .markdown-body {
-    @apply prose prose-slate max-w-none text-base leading-7;
-    @apply prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-slate-950;
-    @apply prose-p:text-slate-800 prose-p:leading-7;
-    @apply prose-lead:text-slate-600;
-    @apply prose-li:text-slate-800 prose-li:leading-7;
-    @apply prose-strong:font-semibold prose-strong:text-slate-900;
-    @apply prose-a:font-normal prose-a:text-sky-700 prose-a:no-underline hover:prose-a:text-sky-900;
-    @apply prose-code:rounded prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:text-[0.85em] prose-code:font-normal prose-code:text-slate-900;
+    @apply prose max-w-none text-base leading-7;
+    @apply prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight;
+    @apply prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-code:text-[0.85em] prose-code:font-normal;
     @apply prose-code:before:content-none prose-code:after:content-none;
-    @apply prose-pre:overflow-x-auto prose-pre:rounded-md prose-pre:border prose-pre:border-slate-200 prose-pre:bg-slate-50 prose-pre:px-4 prose-pre:py-3 prose-pre:text-[0.85rem] prose-pre:leading-6 prose-pre:text-slate-800 prose-pre:shadow-none;
-    @apply prose-blockquote:border-l-4 prose-blockquote:border-slate-300 prose-blockquote:bg-transparent prose-blockquote:py-0 prose-blockquote:pr-0 prose-blockquote:text-slate-600;
-    @apply prose-hr:my-6 prose-hr:border-slate-200;
-    @apply prose-th:border prose-th:border-slate-300 prose-th:bg-slate-50 prose-th:font-semibold prose-th:text-slate-900;
-    @apply prose-td:border prose-td:border-slate-200;
-    @apply prose-img:rounded-md prose-img:border prose-img:border-slate-200 prose-img:shadow-none;
+    @apply prose-pre:overflow-x-auto prose-pre:rounded-md prose-pre:border prose-pre:px-4 prose-pre:py-3 prose-pre:text-[0.85rem] prose-pre:leading-6 prose-pre:shadow-none;
+    @apply prose-blockquote:border-l-4 prose-blockquote:bg-transparent prose-blockquote:py-0 prose-blockquote:pr-0;
+    @apply prose-hr:my-6;
+    @apply prose-th:border prose-th:font-semibold;
+    @apply prose-td:border;
+    @apply prose-img:rounded-md prose-img:border prose-img:shadow-none;
     @apply prose-ol:pl-6 prose-ul:pl-6;
-    @apply prose-li:marker:text-slate-500;
+    --tw-prose-body: var(--color-text);
+    --tw-prose-headings: var(--color-heading);
+    --tw-prose-links: var(--color-link);
+    --tw-prose-bold: var(--color-heading);
+    --tw-prose-counters: var(--color-text-soft);
+    --tw-prose-bullets: var(--color-border-strong);
+    --tw-prose-hr: var(--color-border);
+    --tw-prose-quotes: var(--color-text-soft);
+    --tw-prose-quote-borders: var(--color-border-strong);
+    --tw-prose-captions: var(--color-text-soft);
+    --tw-prose-code: var(--color-heading);
+    --tw-prose-pre-code: var(--color-text);
+    --tw-prose-pre-bg: var(--color-pre-bg);
+    --tw-prose-th-borders: var(--color-border-strong);
+    --tw-prose-td-borders: var(--color-border);
   }
 
   .markdown-body :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, dl, table, pre, hr) {
@@ -146,7 +316,7 @@
   }
 
   .markdown-body img {
-    @apply rounded-md border border-slate-200 shadow-none;
+    border-color: var(--color-border);
   }
 
   .markdown-body pre {
@@ -160,7 +330,8 @@
 
   .markdown-body h1,
   .markdown-body h2 {
-    @apply mt-8 border-b border-slate-200 pb-2;
+    @apply mt-8 border-b pb-2;
+    border-color: var(--color-border);
   }
 
   .markdown-body h3,
@@ -188,11 +359,27 @@
   }
 
   .entity-type-list > a {
-    @apply block rounded-2xl border border-slate-200 bg-white px-5 py-4 text-slate-900 no-underline shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md;
+    @apply block rounded-2xl px-5 py-4 no-underline transition duration-150;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--color-shadow-soft);
+  }
+
+  .entity-type-list > a:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-accent);
+    box-shadow: 0 16px 36px color-mix(in srgb, var(--color-accent) 10%, transparent);
   }
 
   .table-wrap {
-    @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm;
+    @apply overflow-x-auto rounded-2xl shadow-sm;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .table-wrap--compact {
+    max-width: 100%;
   }
 
   table {
@@ -201,19 +388,26 @@
 
   th,
   td {
-    @apply border-b border-slate-200 px-4 py-3 text-left align-top;
+    @apply border-b px-4 py-3 text-left align-top;
+    border-color: var(--color-border);
   }
 
   thead th {
-    @apply bg-slate-50 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500;
+    @apply text-xs font-semibold uppercase tracking-[0.08em];
+    background: var(--color-surface-muted);
+    color: var(--color-text-soft);
   }
 
   tbody tr:hover td {
-    @apply bg-slate-50/80;
+    background: var(--color-table-hover);
   }
 
   .sort-link {
-    @apply whitespace-nowrap text-inherit no-underline hover:text-sky-700;
+    @apply whitespace-nowrap text-inherit no-underline;
+  }
+
+  .sort-link:hover {
+    color: var(--color-link);
   }
 
   .toolbar {
@@ -222,8 +416,16 @@
 
   .toolbar input,
   .toolbar button {
-    @apply rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition;
-    @apply focus:border-sky-500 focus:ring-4 focus:ring-sky-500/15;
+    @apply rounded-xl border px-4 py-2.5 text-sm shadow-sm outline-none transition;
+    border-color: var(--color-border-strong);
+    background: var(--color-input-bg);
+    color: var(--color-text);
+  }
+
+  .toolbar input:focus,
+  .toolbar button:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px var(--color-accent-soft);
   }
 
   .toolbar input {
@@ -231,7 +433,12 @@
   }
 
   .toolbar button {
-    @apply cursor-pointer font-medium hover:border-slate-400 hover:bg-slate-50;
+    @apply cursor-pointer font-medium;
+  }
+
+  .toolbar button:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, var(--color-input-bg));
   }
 
   .toolbar a {
@@ -239,7 +446,10 @@
   }
 
   .plain-pre {
-    @apply m-0 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700;
+    @apply m-0 whitespace-pre-wrap rounded-md border p-4 text-sm leading-6;
+    border-color: var(--color-border);
+    background: var(--color-pre-bg);
+    color: var(--color-text);
   }
 
   .foldable-card summary {
@@ -251,15 +461,19 @@
   }
 
   .foldable-summary {
-    @apply flex cursor-pointer flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-6 py-4;
+    @apply flex cursor-pointer flex-wrap items-center justify-between gap-3 border-b px-6 py-4;
+    border-color: var(--color-border);
+    background: var(--color-surface-subtle);
   }
 
   .foldable-title {
-    @apply text-base font-semibold text-slate-900;
+    @apply text-base font-semibold;
+    color: var(--color-heading);
   }
 
   .foldable-meta {
-    @apply text-sm text-slate-500;
+    @apply text-sm;
+    color: var(--color-text-soft);
   }
 
   .foldable-body {
@@ -268,5 +482,58 @@
 
   .foldable-body > .meta {
     @apply mb-4;
+  }
+
+  .operational-meta {
+    @apply px-6 pt-5;
+  }
+
+  .operational-meta p {
+    @apply mb-2;
+  }
+
+  .operational-table {
+    width: 100%;
+    table-layout: fixed;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .operational-table th,
+  .operational-table td {
+    padding: 0.7rem 0.75rem;
+    vertical-align: top;
+  }
+
+  .operational-table th {
+    font-size: 0.72rem;
+  }
+
+  .operational-table td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .operational-table td a {
+    font-size: 0.92em;
+  }
+
+  .operational-table strong {
+    color: var(--color-heading);
+  }
+}
+
+@media (max-width: 1024px) {
+  .theme-switcher__label {
+    @apply hidden;
+  }
+
+  .operational-table {
+    font-size: 0.82rem;
+  }
+
+  .operational-table th,
+  .operational-table td {
+    padding: 0.6rem 0.55rem;
   }
 }

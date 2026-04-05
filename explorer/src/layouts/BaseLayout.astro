@@ -17,44 +17,86 @@ interface Props {
 const { title, roleId, roleName, customPageLinks = [] } = Astro.props;
 ---
 <!doctype html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title} · Hermit</title>
+    <script is:inline>
+      (() => {
+        const storageKey = "hermit-explorer-theme";
+        const allowedThemes = new Set(["light", "raidyn"]);
+        try {
+          const savedTheme = localStorage.getItem(storageKey) || "light";
+          document.documentElement.dataset.theme = allowedThemes.has(savedTheme) ? savedTheme : "light";
+        } catch {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
-    <div class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.10),_transparent_34%),linear-gradient(to_bottom,_#f8fafc,_#f1f5f9)]">
-      <header class="sticky top-0 z-20 border-b border-white/10 bg-slate-950/90 backdrop-blur">
-        <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <a href="/" class="shrink-0 text-sm font-semibold tracking-[0.12em] text-white no-underline">
-            HERMIT
-          </a>
-          <details class="relative md:hidden">
-            <summary
-              class="list-none cursor-pointer rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden"
-            >
-              <span class="sr-only">Open menu</span>
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
-              </svg>
-            </summary>
-            <div
-              class="absolute right-0 z-30 mt-2 min-w-[12rem] rounded-xl border border-white/10 bg-slate-950/95 p-2 shadow-lg backdrop-blur"
-            >
-              <nav class="flex flex-col gap-0.5">
-                <HeaderNavLinks roleId={roleId} roleName={roleName} mobile />
-              </nav>
-            </div>
-          </details>
-          <nav class="hidden items-center gap-2 md:flex" aria-label="Main">
-            <HeaderNavLinks roleId={roleId} roleName={roleName} customPageLinks={customPageLinks} />
-          </nav>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="app-header-inner">
+          <a href="/" class="brand-link">HERMIT</a>
+
+          <div class="header-actions">
+            <label class="theme-switcher" for="theme-select">
+              <span class="theme-switcher__label">Theme</span>
+              <select id="theme-select" class="theme-select" data-theme-select>
+                <option value="light">Light</option>
+                <option value="raidyn">Raidyn</option>
+              </select>
+            </label>
+
+            <details class="relative md:hidden">
+              <summary class="mobile-menu-button">
+                <span class="sr-only">Open menu</span>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+                </svg>
+              </summary>
+              <div class="mobile-menu-panel">
+                <nav class="flex flex-col gap-0.5">
+                  <HeaderNavLinks roleId={roleId} roleName={roleName} customPageLinks={customPageLinks} mobile />
+                </nav>
+              </div>
+            </details>
+
+            <nav class="hidden items-center gap-2 md:flex" aria-label="Main">
+              <HeaderNavLinks roleId={roleId} roleName={roleName} customPageLinks={customPageLinks} />
+            </nav>
+          </div>
         </div>
       </header>
+
       <main class="page-shell">
         <slot />
       </main>
     </div>
+
+    <script is:inline>
+      (() => {
+        const storageKey = "hermit-explorer-theme";
+        const select = document.querySelector("[data-theme-select]");
+        if (!(select instanceof HTMLSelectElement)) {
+          return;
+        }
+
+        const currentTheme = document.documentElement.dataset.theme || "light";
+        select.value = currentTheme;
+
+        select.addEventListener("change", () => {
+          const nextTheme = select.value || "light";
+          document.documentElement.dataset.theme = nextTheme;
+          try {
+            localStorage.setItem(storageKey, nextTheme);
+          } catch {
+            // Ignore storage failures and keep the current session theme.
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

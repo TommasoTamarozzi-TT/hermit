@@ -92,10 +92,15 @@ const customHome = await renderExplorerHome({ root, explorer });
       </>
 
       {readmeHtml && (
-        <section class="file-section card mt-10">
-          <h3>README</h3>
-          <div class="markdown-body" set:html={readmeHtml} />
-        </section>
+        <details class="file-section card foldable-card mt-10">
+          <summary class="foldable-summary">
+            <span class="foldable-title">README</span>
+            <span class="foldable-meta">Open the Hermit overview, setup notes, and docs links</span>
+          </summary>
+          <div class="foldable-body">
+            <div class="markdown-body" set:html={readmeHtml} />
+          </div>
+        </details>
       )}
     </>
   )}
