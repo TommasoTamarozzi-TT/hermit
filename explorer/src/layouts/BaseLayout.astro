@@ -42,6 +42,24 @@ const { title, roleId, roleName } = Astro.props;
             </div>
           </details>
           <nav class="hidden items-center gap-2 md:flex" aria-label="Main">
+            <HeaderNavLinks roleId={roleId} roleName={roleName} customPageLinks={customPageLinks} />
+          </nav>
+        </div>
+      </header>
+      <main class="page-shell">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
+w-[12rem] rounded-xl border border-white/10 bg-slate-950/95 p-2 shadow-lg backdrop-blur"
+            >
+              <nav class="flex flex-col gap-0.5">
+                <HeaderNavLinks roleId={roleId} roleName={roleName} mobile />
+              </nav>
+            </div>
+          </details>
+          <nav class="hidden items-center gap-2 md:flex" aria-label="Main">
             <HeaderNavLinks roleId={roleId} roleName={roleName} />
           </nav>
         </div>
