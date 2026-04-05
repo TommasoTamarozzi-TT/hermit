@@ -20,7 +20,7 @@ export const raidynChiefExecutive = {
   title: "CEO",
 };
 
-export const humanColleagues: OrgPerson[] = [
+export const teamMembers: OrgPerson[] = [
   { id: "pavel", name: "Pavel", title: "Principal Developer" },
   { id: "bart", name: "Bart", title: "Algorithm Developer" },
   { id: "aga", name: "Aga", title: "Designer" },

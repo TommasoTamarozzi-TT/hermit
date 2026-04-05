@@ -2,7 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import AgentsSectionTabs from "../../components/AgentsSectionTabs.astro";
 import { getWorkspaceRoot, listRoleIds, loadRole } from "../../lib/workspace.js";
-import { getVirtualAgentsData, humanColleagues, raidynChiefExecutive } from "../../lib/raidyn-org.js";
+import { getVirtualAgentsData, raidynChiefExecutive, teamMembers } from "../../lib/raidyn-org.js";
 
 const root = getWorkspaceRoot();
 const roleIds = await listRoleIds(root);
@@ -18,8 +18,8 @@ const roles = await Promise.all(
 );
 
 const { headOfOperations, reports: virtualReports } = getVirtualAgentsData(roles);
-const directHumanColleagues = humanColleagues.filter((person) => !person.reportsTo);
-const pavelReports = humanColleagues.filter((person) => person.reportsTo === "pavel");
+const directTeamMembers = teamMembers.filter((person) => !person.reportsTo);
+const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel");
 ---
 <BaseLayout title="Agents">
   <div class="breadcrumb">
@@ -28,8 +28,8 @@ const pavelReports = humanColleagues.filter((person) => person.reportsTo === "pa
   <div class="page-intro">
     <h1>Agents</h1>
     <p class="meta">
-      {humanColleagues.length} human colleague{humanColleagues.length !== 1 ? "s" : ""} and {roles.length} virtual
-      role{roles.length !== 1 ? "s" : ""}
+      {teamMembers.length} team member{teamMembers.length !== 1 ? "s" : ""} and {roles.length} virtual role
+      {roles.length !== 1 ? "s" : ""}
     </p>
   </div>
 
@@ -56,10 +56,10 @@ const pavelReports = humanColleagues.filter((person) => person.reportsTo === "pa
             </div>
 
             <div class="org-node-grid">
-              {directHumanColleagues.map((person) => (
+              {directTeamMembers.map((person) => (
                 <div class="org-node-stack">
                   <article class:list={{ "org-node": true, "org-node--lead": person.id === "pavel" }}>
-                    <span class="org-node__eyebrow">Human colleague</span>
+                    <span class="org-node__eyebrow">Team member</span>
                     <h3 class="org-node__name">{person.name}</h3>
                     <p class="org-node__title">{person.title}</p>
                   </article>
