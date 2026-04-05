@@ -273,6 +273,7 @@ async function ensureAgentFiles(
         await fs.writeFile(
           filePath,
           await renderSharedPromptTemplate(workspaceRoot, file.template, {
+            workspaceRoot,
             ...values,
             updatedAt: new Date().toISOString(),
             sourceRefsYaml: renderYamlList(["workspace default scaffold"]),

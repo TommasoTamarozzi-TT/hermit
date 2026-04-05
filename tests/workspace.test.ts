@@ -51,8 +51,13 @@ describe("workspace", () => {
     await ensureWorkspaceScaffold(tmpRoot, role);
     expect(readdirSync(tmpRoot)).toEqual(expect.arrayContaining(["entities", "agents", "skills", "inbox"]));
     expect(readFileSync(path.join(tmpRoot, ".hermit", "agent", "record.md"), "utf8")).toContain("Hermit Agent");
-    expect(readFileSync(path.join(tmpRoot, ".hermit", "agent", "inbox.md"), "utf8")).toContain(".hermit/agent/record.md");
+    expect(readFileSync(path.join(tmpRoot, ".hermit", "agent", "inbox.md"), "utf8")).toContain(
+      path.join(tmpRoot, ".hermit", "agent", "record.md"),
+    );
     expect(readFileSync(path.join(tmpRoot, "agents", "role-a", "agent", "record.md"), "utf8")).toContain("Role A");
+    expect(readFileSync(path.join(tmpRoot, "agents", "role-a", "agent", "inbox.md"), "utf8")).toContain(
+      path.join(tmpRoot, "agents", "role-a", "agent", "record.md"),
+    );
     expect(readFileSync(path.join(tmpRoot, "agents", "role-a", "agent", "record.md"), "utf8")).toContain(
       "## Strategic Experiments",
     );
