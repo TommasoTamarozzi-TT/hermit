@@ -515,24 +515,24 @@
     width: max-content;
     min-width: 100%;
     table-layout: auto;
-    font-size: 0.84rem;
-    line-height: 1.35;
+    font-size: 0.78rem;
+    line-height: 1.25;
   }
 
   .operational-table th,
   .operational-table td {
-    min-width: 8rem;
-    padding: 0.55rem 0.6rem;
+    min-width: 6.4rem;
+    padding: 0.42rem 0.46rem;
     vertical-align: top;
   }
 
   .operational-table th:first-child,
   .operational-table td:first-child {
-    min-width: 11rem;
+    min-width: 8.8rem;
   }
 
   .operational-table th {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
   }
 
   .operational-table td {
@@ -541,7 +541,7 @@
   }
 
   .operational-table td a {
-    font-size: 0.88em;
+    font-size: 0.82em;
   }
 
   .operational-table strong {
@@ -557,7 +557,7 @@
   }
 
   .operational-stage-card .foldable-summary {
-    padding: 0.9rem 1rem;
+    padding: 0.72rem 0.85rem;
   }
 
   .operational-stage-card .table-wrap--operational {
@@ -582,17 +582,17 @@
   }
 
   .operational-table {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
   }
 
   .operational-table th,
   .operational-table td {
-    min-width: 7rem;
-    padding: 0.5rem;
+    min-width: 5.6rem;
+    padding: 0.38rem 0.42rem;
   }
 
   .operational-table th:first-child,
   .operational-table td:first-child {
-    min-width: 9rem;
+    min-width: 7.5rem;
   }
 }
