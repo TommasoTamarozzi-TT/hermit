@@ -1,0 +1,37 @@
+---
+interface Props {
+  active: "org-chart" | "board";
+}
+
+const { active } = Astro.props;
+
+const tabs = [
+  {
+    key: "org-chart",
+    href: "/agents",
+    title: "Org chart",
+    description: "Leadership, human colleagues, and virtual agents.",
+  },
+  {
+    key: "board",
+    href: "/agents/board",
+    title: "Board",
+    description: "Raidyn directors and board-level leadership.",
+  },
+] as const;
+---
+<div class="side-nav">
+  {tabs.map((tab) => (
+    <a
+      href={tab.href}
+      class:list={{
+        "section-tab": true,
+        "section-tab--active": active === tab.key,
+      }}
+      aria-current={active === tab.key ? "page" : undefined}
+    >
+      <strong class="section-tab__title">{tab.title}</strong>
+      <span class="section-tab__description">{tab.description}</span>
+    </a>
+  ))}
+</div>

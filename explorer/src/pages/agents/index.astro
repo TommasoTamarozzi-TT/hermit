@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import AgentsSectionTabs from "../../components/AgentsSectionTabs.astro";
 import { getWorkspaceRoot, listRoleIds, loadRole } from "../../lib/workspace.js";
+import { getVirtualAgentsData, humanColleagues, raidynChiefExecutive } from "../../lib/raidyn-org.js";
 
 const root = getWorkspaceRoot();
 const roleIds = await listRoleIds(root);
@@ -14,6 +16,10 @@ const roles = await Promise.all(
     };
   }),
 );
+
+const { headOfOperations, reports: virtualReports } = getVirtualAgentsData(roles);
+const directHumanColleagues = humanColleagues.filter((person) => !person.reportsTo);
+const pavelReports = humanColleagues.filter((person) => person.reportsTo === "pavel");
 ---
 <BaseLayout title="Agents">
   <div class="breadcrumb">
@@ -21,15 +27,102 @@ const roles = await Promise.all(
   </div>
   <div class="page-intro">
     <h1>Agents</h1>
-    <p class="meta">{roles.length} role{roles.length !== 1 ? "s" : ""}</p>
+    <p class="meta">
+      {humanColleagues.length} human colleague{humanColleagues.length !== 1 ? "s" : ""} and {roles.length} virtual
+      role{roles.length !== 1 ? "s" : ""}
+    </p>
   </div>
 
-  <div class="entity-type-list">
-    {roles.map((role) => (
-      <a href={`/agents/${role.id}`}>
-        <strong>{role.name}</strong>
-        <span class="meta"> — {role.description}</span>
-      </a>
-    ))}
+  <div class="page-with-sidebar">
+    <aside class="card section-sidebar">
+      <AgentsSectionTabs active="org-chart" />
+    </aside>
+
+    <div class="section-content">
+      <section class="org-chart">
+        <div class="org-chart-root">
+          <article class="org-node org-node--executive">
+            <span class="org-node__eyebrow">Raidyn leadership</span>
+            <h2 class="org-node__name">{raidynChiefExecutive.name}</h2>
+            <p class="org-node__title">{raidynChiefExecutive.title}</p>
+          </article>
+        </div>
+
+        <div class="org-branch-grid">
+          <section class="card org-branch">
+            <div class="org-branch-heading">
+              <span class="org-branch__badge">Human colleagues</span>
+              <p class="meta">Core people structure from the latest internal brief.</p>
+            </div>
+
+            <div class="org-node-grid">
+              {directHumanColleagues.map((person) => (
+                <div class="org-node-stack">
+                  <article class:list={{ "org-node": true, "org-node--lead": person.id === "pavel" }}>
+                    <span class="org-node__eyebrow">Human colleague</span>
+                    <h3 class="org-node__name">{person.name}</h3>
+                    <p class="org-node__title">{person.title}</p>
+                  </article>
+
+                  {person.id === "pavel" && pavelReports.length > 0 && (
+                    <div class="org-report-list" aria-label="Pavel direct reports">
+                      {pavelReports.map((report) => (
+                        <article class="org-node org-node--report">
+                          <span class="org-node__eyebrow">Reports to Pavel</span>
+                          <h3 class="org-node__name">{report.name}</h3>
+                          <p class="org-node__title">{report.title}</p>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section class="card org-branch">
+            <div class="org-branch-heading">
+              <span class="org-branch__badge org-branch__badge--virtual">Virtual agents</span>
+              <p class="meta">This branch updates automatically from the current role folders in `workspace/agents/`.</p>
+            </div>
+
+            <div class="org-node-stack">
+              <a class="org-node org-node--lead org-node--link" href={headOfOperations.href}>
+                <span class="org-node__eyebrow">Virtual operations lead</span>
+                <h3 class="org-node__name">{headOfOperations.name}</h3>
+                <p class="org-node__title">Coordinates the virtual-agent org</p>
+                <p class="org-node__description">{headOfOperations.description}</p>
+              </a>
+
+              {virtualReports.length > 0 ? (
+                <div class="org-report-list org-report-list--agents" aria-label="Head of Operations direct reports">
+                  {virtualReports.map((role) => (
+                    <a class="org-node org-node--agent org-node--link" href={role.href}>
+                      <span class="org-node__eyebrow">Reports to Head of Operations</span>
+                      <h3 class="org-node__name">{role.name}</h3>
+                      <p class="org-node__description">{role.description}</p>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p class="meta">No direct-report agents are registered yet.</p>
+              )}
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="mt-8">
+        <h2 class="section-title">Current role workspaces</h2>
+        <div class="entity-type-list">
+          {roles.map((role) => (
+            <a href={`/agents/${role.id}`}>
+              <strong>{role.name}</strong>
+              <span class="meta"> — {role.description}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    </div>
   </div>
 </BaseLayout>

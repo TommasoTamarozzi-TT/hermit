@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AgentsSectionTabs from "../../components/AgentsSectionTabs.astro";
+import { boardMembers } from "../../lib/raidyn-org.js";
+---
+<BaseLayout title="Board">
+  <div class="breadcrumb">
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> → <a href="/agents">Agents</a> → Board
+  </div>
+  <div class="page-intro">
+    <h1>Board</h1>
+    <p class="meta">{boardMembers.length} directors in the current Raidyn board view</p>
+  </div>
+
+  <div class="page-with-sidebar">
+    <aside class="card section-sidebar">
+      <AgentsSectionTabs active="board" />
+    </aside>
+
+    <div class="section-content">
+      <section class="card org-branch">
+        <div class="org-branch-heading">
+          <span class="org-branch__badge org-branch__badge--board">Board of directors</span>
+          <p class="meta">Board membership from the latest internal brief.</p>
+        </div>
+
+        <div class="board-grid">
+          {boardMembers.map((member) => (
+            <article class="org-node org-node--board">
+              <span class="org-node__eyebrow">Board member</span>
+              <h2 class="org-node__name">{member.name}</h2>
+              <p class="org-node__title">{member.title}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
