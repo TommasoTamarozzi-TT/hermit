@@ -1,0 +1,32 @@
+PI_CODING_AGENT_DIR=/Users/benschrauwen/dev/hermit-ben/.pi/agent
+ROLE_AGENT_MODEL=local/gemma4[1:32 PM].pi/agent/models.json
+[1:32 PM]{
+  "providers": {
+    "local": {
+      "baseUrl": "http://sparky-002.tyrannosaurus-garibaldi.ts.net:30000/v1",
+      "api": "openai-completions",
+      "apiKey": "local",
+      "authHeader": false,
+      "models": [
+        {
+          "id": "gemma4",
+          "name": "Gemma 4 (local)",
+          "reasoning": false,
+          "input": ["text"],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": false,
+            "supportsUsageInStreaming": false,
+            "maxTokensField": "max_tokens"
+          }
+        }
+      ]
+    }
+  }
+} (edited)

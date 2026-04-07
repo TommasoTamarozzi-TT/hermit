@@ -30,7 +30,8 @@
       "api.telegram.org",
       "login.microsoftonline.com",
       "graph.microsoft.com",
-      "slack.com"
+      "slack.com",
+      "sparky-002.tyrannosaurus-garibaldi.ts.net"
     ]
   }
 }
