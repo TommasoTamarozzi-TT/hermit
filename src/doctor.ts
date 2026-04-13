@@ -504,22 +504,3 @@ export async function printDoctorContext(root: string, roleId: string): Promise<
     console.log(`context: ${part.kind} ${part.sourcePath} (${part.renderedChars} chars)`);
   }
 }
-_ROOT,
-      });
-    })()
-    : await (async () => {
-      const role = await loadRole(root, roleId);
-      const promptLibrary = await PromptLibrary.load(role);
-      return promptLibrary.getSystemPromptBreakdown({
-        workspaceRoot: root,
-        roleId: role.id,
-        roleRoot: path.relative(root, role.roleDir) || ".",
-      });
-    })();
-  const totalChars = breakdown.reduce((sum, part) => sum + part.renderedChars, 0);
-
-  console.log(`context: total rendered chars ${totalChars}`);
-  for (const part of breakdown) {
-    console.log(`context: ${part.kind} ${part.sourcePath} (${part.renderedChars} chars)`);
-  }
-}
