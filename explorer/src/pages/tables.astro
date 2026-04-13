@@ -40,7 +40,8 @@ function formatInteger(value: number): string {
 }
 
 async function listUsageSessionFiles(dir: string): Promise<string[]> {
-  const entries = await fs.readdir(dir, { withFileTypes: true }).catch((error) => {
+  const entries = await fs.readdir(dir, { withFileTypes:
+true }).catch((error) => {
     const code = error && typeof error === "object" && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
     if (code === "ENOENT") {
       return [] as fs.Dirent[];
@@ -98,9 +99,8 @@ function extractUsageEntry(record: any): { timestamp: string; cost: number; toke
   };
 }
 
-async function loadTodayOpenAiTotals(): Promise<UsageTotals> {
-  const todayKey = formatLocalDateKey(new Date());
-  const files = await listUsageSessionFiles(root);
+async function getUsageForPeriod(dir: string, startDate: Date, endDate: Date): Promise<UsageTotals> {
+  const files = await listUsageSessionFiles(dir);
   const totals: UsageTotals = { cost: 0, tokens: 0, entries: 0 };
 
   for (const filePath of files) {
@@ -123,7 +123,8 @@ async function loadTodayOpenAiTotals(): Promise<UsageTotals> {
         if (!entry) {
           continue;
         }
-        if (formatLocalDateKey(new Date(entry.timestamp)) !== todayKey) {
+        const entryDate = new Date(entry.timestamp);
+        if (entryDate < startDate || entryDate > endDate) {
           continue;
         }
 
@@ -139,32 +140,97 @@ async function loadTodayOpenAiTotals(): Promise<UsageTotals> {
   return totals;
 }
 
-const todayTotals = await loadTodayOpenAiTotals();
+// Periods
+const now = new Date();
+const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const yesterdayStart = new Date(todayStart);
+yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+const weekStart = new Date(todayStart);
+weekStart.setDate(weekStart.getDate() - 7);
+
+const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+const todayTotals = await getUsageForPeriod(root, todayStart, now);
+const weekTotals = await getUsageForPeriod(root, weekStart, now);
+const monthTotals = await getUsageForPeriod(root, monthStart, now);
+
 ---
 <BaseLayout title="Tables">
   <div class="breadcrumb">
     <a href="/">Raidyn Virtual Assistent - Explorer</a> → Tables
   </div>
   <div class="page-intro">
-    <h1>Tables</h1>
+    <h1 class="page-title">Tables</h1>
     <p class="meta">Quick links to summary tables and operational views.</p>
   </div>
 
-  <section class="file-section card">
-    <h2>OpenAI usage today</h2>
-    <p><strong>Estimated cost:</strong> {formatCurrency(todayTotals.cost)}</p>
-    <p><strong>Used tokens:</strong> {formatInteger(todayTotals.tokens)}</p>
-    <p class="meta">Today so far in {timeZone}. Counted from recorded OpenAI Hermit and role-agent sessions: {formatInteger(todayTotals.entries)} usage entries.</p>
-  </section>
+  <details class="file-section card" open>
+    <summary>OpenAI Usage & Costs</summary>
+    <div class="usage-grid">
+      <div class="usage-item">
+        <span class="label">Today</span>
+        <div class="value">{formatCurrency(todayTotals.cost)}</div>
+        <div class="subvalue">{formatInteger(todayTotals.tokens)} tokens</div>
+      </div>
+      <div class="usage-item">
+        <span class="label">This Week</span>
+        <div class="value">{formatCurrency(weekTotals.cost)}</div>
+        <div class="subvalue">{formatInteger(weekTotals.tokens)} tokens</div>
+      </div>
+      <div class="usage-item">
+        <span class="label">This Month</span>
+        <div class="value">{formatCurrency(monthTotals.cost)}</div>
+        <div class="subvalue">{formatInteger(monthTotals.tokens)} tokens</div>
+      </div>
+    </div>
+    <p class="meta" style="margin-top: 1rem;">
+      Data based on {formatInteger(todayTotals.entries)} entries from recorded sessions in {timeZone}.
+    </p>
+  </details>
 
   <div class="entity-type-list">
     <a href="/daily-digest">
-      <strong>Daily Digest</strong>
+      <strong class="link-title">Daily Digest</strong>
       <span class="meta"> — today&apos;s emails, calendar action days, and the latest digest view</span>
     </a>
     <a href="/slack-summary">
-      <strong>Slack Summary</strong>
+      <strong class="link-title">Slack Summary</strong>
       <span class="meta"> — unread DMs plus channel activity since the last scan</span>
     </a>
   </div>
 </BaseLayout>
+
+<style>
+  .usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .usage-item {
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .usage-item .label {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-bottom: 0.25rem;
+  }
+  .usage-item .value {
+    font-size: 1.25rem;
+    font-weight: bold;
+  }
+  .usage-item .subvalue {
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+  .link-title {
+    display: block;
+  }
+</style>
