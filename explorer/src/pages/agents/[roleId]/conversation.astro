@@ -9,6 +9,7 @@ if (!roleId) return Astro.redirect("/");
 const root = getWorkspaceRoot();
 const role = await loadRole(root, roleId);
 const conversation = await loadLatestRoleConversation(role);
+const chatEntries = conversation.entries.filter((entry) => entry.kind === "user" || entry.kind === "assistant");
 ---
 <BaseLayout title={`${role.name} conversation`} roleId={role.id} roleName={role.name}>
   <div class="breadcrumb">
