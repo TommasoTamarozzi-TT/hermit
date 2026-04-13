@@ -79,6 +79,8 @@ interface WebSearchCitation {
 interface WebSearchResult {
   answer: string;
   citations: WebSearchCitation[];
+  provider: "openai" | "anthropic";
+  model: string;
 }
 
 export type WebSearchExecutor = (params: WebSearchToolParams) => Promise<WebSearchResult>;
@@ -233,14 +235,15 @@ function extractAnthropicWebSearchCitations(response: unknown): WebSearchCitatio
 
 function formatWebSearchResult(result: WebSearchResult): string {
   const answer = result.answer.trim() || "Web search completed but returned no answer text.";
+  const executionSummary = `Web search executed via ${result.provider}/${result.model}. Sources returned: ${result.citations.length}.`;
   if (result.citations.length === 0) {
-    return answer;
+    return `${executionSummary}\n\n${answer}`;
   }
 
   const sources = result.citations.map((citation) =>
     citation.title ? `- ${citation.title}: ${citation.url}` : `- ${citation.url}`,
   );
-  return `${answer}\n\nSources:\n${sources.join("\n")}`;
+  return `${executionSummary}\n\n${answer}\n\nSources:\n${sources.join("\n")}`;
 }
 
 async function executeOpenAIWebSearch(params: WebSearchToolParams, apiKey?: string): Promise<WebSearchResult> {
@@ -275,6 +278,8 @@ async function executeOpenAIWebSearch(params: WebSearchToolParams, apiKey?: stri
   return {
     answer: extractWebSearchText(response) || "Web search completed but returned no answer text.",
     citations: extractWebSearchCitations(response),
+    provider: "openai",
+    model: "gpt-5",
   };
 }
 
@@ -313,6 +318,8 @@ async function executeAnthropicWebSearch(params: WebSearchToolParams, apiKey?: s
   return {
     answer: extractAnthropicWebSearchText(response) || "Web search completed but returned no answer text.",
     citations: extractAnthropicWebSearchCitations(response),
+    provider: "anthropic",
+    model: "claude-sonnet-4-6",
   };
 }
 
