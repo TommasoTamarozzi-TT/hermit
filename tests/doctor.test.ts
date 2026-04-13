@@ -109,6 +109,40 @@ updated_at: 2026-03-08T12:00:00.000Z
     }
   });
 
+  it("warns clearly when a canonical markdown record has malformed frontmatter", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "doctor-malformed-frontmatter-"));
+
+    try {
+      seedRoleWorkspace(root, ["role-a"]);
+      const role = await loadRole(root, "role-a");
+      await ensureWorkspaceScaffold(root, role);
+      writeSharedEntityRecord(root);
+
+      writeFileSync(
+        path.join(root, "agents", "role-a", "agent", "record.md"),
+        `---
+id: role-a-agent
+type: agent
+name: "Broken
+updated_at: 2026-03-08T12:00:00.000Z
+---
+
+## Summary
+
+Broken frontmatter example.
+`,
+      );
+
+      const result = await runDoctor(root, "role-a");
+      const logged = consoleSpy.log.mock.calls.map((c) => c[0] as string);
+      expect(result).toBe(true);
+      expect(logged.some((m) => m.includes("could not be parsed as markdown frontmatter"))).toBe(true);
+      expect(logged.some((m) => m.includes(path.join(root, "agents", "role-a", "agent", "record.md")))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("fails when entity-defs/entities.md has body content but no frontmatter entities list", async () => {
     const root = mkdtempSync(path.join(tmpdir(), "doctor-entity-defs-shape-"));
 

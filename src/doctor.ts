@@ -159,6 +159,16 @@ function addGeneralFinding(findings: DoctorFinding[], level: DoctorFinding["leve
   findings.push({ level, kind: "general", message });
 }
 
+function describeMarkdownLoadError(filePath: string, error: unknown): string {
+  const code = error && typeof error === "object" && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
+  if (code === "ENOENT") return `${filePath} is missing or unreadable.`;
+  if (code) return `${filePath} is unreadable (${code}).`;
+  if (error instanceof Error && error.message.trim()) {
+    return `${filePath} could not be parsed as markdown frontmatter: ${error.message.trim()}`;
+  }
+  return `${filePath} is missing or unreadable.`;
+}
+
 async function validateEntityDefsFile(findings: DoctorFinding[], root: string): Promise<void> {
   const entityDefsPath = path.join(root, "entity-defs", "entities.md");
 
@@ -177,9 +187,9 @@ async function validateEntityDefsFile(findings: DoctorFinding[], root: string): 
       );
     }
   } catch (error) {
-    const code = error && typeof error === "object" && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
-    if (code !== "ENOENT") {
-      addGeneralFinding(findings, "warning", `${entityDefsPath} is missing or unreadable.`);
+    const message = describeMarkdownLoadError(entityDefsPath, error);
+    if (!message.endsWith("missing or unreadable.")) {
+      addGeneralFinding(findings, "warning", message);
     }
   }
 }
@@ -195,8 +205,8 @@ async function validateMarkdownRecord(
     const data = parsed.data as Record<string, unknown>;
     addMissingFrontmatterWarnings(findings, recordPath, data);
     addPlaceholderWarnings(findings, recordPath, content, templatePlaceholderCandidates);
-  } catch {
-    addGeneralFinding(findings, "warning", `${recordPath} is missing or unreadable.`);
+  } catch (error) {
+    addGeneralFinding(findings, "warning", describeMarkdownLoadError(recordPath, error));
   }
 }
 
@@ -476,6 +486,25 @@ export async function printDoctorContext(root: string, roleId: string): Promise<
         workspaceRoot: root,
         roleId: HERMIT_ROLE_ID,
         roleRoot: HERMIT_ROLE_ROOT,
+      });
+    })()
+    : await (async () => {
+      const role = await loadRole(root, roleId);
+      const promptLibrary = await PromptLibrary.load(role);
+      return promptLibrary.getSystemPromptBreakdown({
+        workspaceRoot: root,
+        roleId: role.id,
+        roleRoot: path.relative(root, role.roleDir) || ".",
+      });
+    })();
+  const totalChars = breakdown.reduce((sum, part) => sum + part.renderedChars, 0);
+
+  console.log(`context: total rendered chars ${totalChars}`);
+  for (const part of breakdown) {
+    console.log(`context: ${part.kind} ${part.sourcePath} (${part.renderedChars} chars)`);
+  }
+}
+_ROOT,
       });
     })()
     : await (async () => {
