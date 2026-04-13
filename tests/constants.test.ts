@@ -13,8 +13,8 @@ describe("constants", () => {
     expect(ENTITY_SEQUENCE_WIDTH).toBe(4);
   });
 
-  it("default runtime settings stay generic", () => {
-    expect(DEFAULT_MODEL).toBeUndefined();
+  it("default runtime settings reflect the current environment safely", () => {
+    expect(DEFAULT_MODEL).toBe(process.env.ROLE_AGENT_MODEL?.trim() || undefined);
     expect(DEFAULT_THINKING_LEVEL).toBe("medium");
   });
 });

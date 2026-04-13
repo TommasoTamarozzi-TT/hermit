@@ -137,7 +137,10 @@ export function collectModelPreferences(
   fallbackModels: readonly string[] = DEFAULT_FALLBACK_MODELS,
 ): ModelReference[] {
   const seen = new Set<string>();
-  const rawModels = [preferredModel, ...fallbackModels].filter((value): value is string => typeof value === "string");
+  const rawModels = [preferredModel, ...fallbackModels]
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
   const preferences: ModelReference[] = [];
 
   for (const rawModel of rawModels) {

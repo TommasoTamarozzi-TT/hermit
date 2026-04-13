@@ -87,7 +87,7 @@ describe("provider-aware model resolution", () => {
     });
     const modelRegistry = new ModelRegistry(authStorage);
 
-    const resolved = resolveConfiguredModel(authStorage, modelRegistry, undefined, []);
+    const resolved = resolveConfiguredModel(authStorage, modelRegistry, "", []);
 
     expect(resolved.selectionSource).toBe("best-available");
     expect([
