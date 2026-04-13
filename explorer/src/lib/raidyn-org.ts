@@ -13,6 +13,7 @@ export interface ExplorerRoleSummary {
 
 export interface OrgRoleSummary extends ExplorerRoleSummary {
   href: string;
+  conversationHref: string;
 }
 
 export const raidynChiefExecutive = {
@@ -46,6 +47,7 @@ function withHref(role: ExplorerRoleSummary): OrgRoleSummary {
   return {
     ...role,
     href: `/agents/${role.id}`,
+    conversationHref: `/agents/${role.id}/conversation`,
   };
 }
 
@@ -73,6 +75,7 @@ export function getVirtualAgentsData(roles: ExplorerRoleSummary[]): {
           name: "Head of Operations",
           description: "Coordinates the virtual-agent team and operational follow-through.",
           href: "/agents/head-of-operations",
+          conversationHref: "/agents/head-of-operations/conversation",
         },
     reports,
   };

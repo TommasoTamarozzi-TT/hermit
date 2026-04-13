@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active: "org-chart" | "board";
+  active: "org-chart" | "conversations" | "board";
 }
 
 const { active } = Astro.props;
@@ -11,6 +11,12 @@ const tabs = [
     href: "/agents",
     title: "Org chart",
     description: "Leadership, human colleagues, and virtual agents.",
+  },
+  {
+    key: "conversations",
+    href: "/agents/conversations",
+    title: "Conversations",
+    description: "Latest saved conversation for each virtual agent.",
   },
   {
     key: "board",

@@ -27,6 +27,10 @@ const sections = await Promise.all(
     <p class="meta">{role.description}</p>
   </div>
 
+  <div class="page-actions">
+    <a class="action-button action-button--secondary" href={`/agents/${role.id}/conversation`}>Open latest conversation</a>
+  </div>
+
   {sections.map((section) => (
     <div set:html={section} />
   ))}

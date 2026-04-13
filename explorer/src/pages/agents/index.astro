@@ -87,21 +87,29 @@ const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel"
             </div>
 
             <div class="org-node-stack">
-              <a class="org-node org-node--lead org-node--link" href={headOfOperations.href}>
+              <article class="org-node org-node--lead">
                 <span class="org-node__eyebrow">Virtual operations lead</span>
                 <h3 class="org-node__name">{headOfOperations.name}</h3>
                 <p class="org-node__title">Coordinates the virtual-agent org</p>
                 <p class="org-node__description">{headOfOperations.description}</p>
-              </a>
+                <div class="org-node__actions">
+                  <a class="action-button" href={headOfOperations.href}>Agent definition</a>
+                  <a class="action-button action-button--secondary" href={headOfOperations.conversationHref}>Last conversation</a>
+                </div>
+              </article>
 
               {virtualReports.length > 0 ? (
                 <div class="org-report-list org-report-list--agents" aria-label="Head of Operations direct reports">
                   {virtualReports.map((role) => (
-                    <a class="org-node org-node--agent org-node--link" href={role.href}>
+                    <article class="org-node org-node--agent">
                       <span class="org-node__eyebrow">Reports to Head of Operations</span>
                       <h3 class="org-node__name">{role.name}</h3>
                       <p class="org-node__description">{role.description}</p>
-                    </a>
+                      <div class="org-node__actions">
+                        <a class="action-button" href={role.href}>Agent definition</a>
+                        <a class="action-button action-button--secondary" href={role.conversationHref}>Last conversation</a>
+                      </div>
+                    </article>
                   ))}
                 </div>
               ) : (
@@ -116,10 +124,16 @@ const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel"
         <h2 class="section-title">Current role workspaces</h2>
         <div class="entity-type-list">
           {roles.map((role) => (
-            <a href={`/agents/${role.id}`}>
-              <strong>{role.name}</strong>
-              <span class="meta"> — {role.description}</span>
-            </a>
+            <div class="linked-list-item">
+              <div>
+                <strong>{role.name}</strong>
+                <span class="meta"> — {role.description}</span>
+              </div>
+              <div class="linked-list-item__actions">
+                <a class="action-button" href={`/agents/${role.id}`}>Agent definition</a>
+                <a class="action-button action-button--secondary" href={`/agents/${role.id}/conversation`}>Last conversation</a>
+              </div>
+            </div>
           ))}
         </div>
       </section>

@@ -1,0 +1,117 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { loadLatestRoleConversation } from "../../../lib/session-history.ts";
+import { getWorkspaceRoot, loadRole } from "../../../lib/workspace.js";
+
+const { roleId } = Astro.params;
+if (!roleId) return Astro.redirect("/");
+
+const root = getWorkspaceRoot();
+const role = await loadRole(root, roleId);
+const conversation = await loadLatestRoleConversation(role);
+---
+<BaseLayout title={`${role.name} conversation`} roleId={role.id} roleName={role.name}>
+  <div class="breadcrumb">
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> →
+    <a href="/agents">Agents</a> →
+    <a href="/agents/conversations">Conversations</a> →
+    {role.name}
+  </div>
+
+  <div class="page-intro">
+    <h1>{role.name} · latest conversation</h1>
+    <p class="meta">{role.description}</p>
+  </div>
+
+  <div class="page-actions">
+    <a class="action-button" href={`/agents/${role.id}`}>Open agent definition</a>
+    <a class="action-button action-button--secondary" href="/agents/conversations">Back to all conversations</a>
+  </div>
+
+  {conversation.sessionPath ? (
+    <>
+      <section class="card conversation-summary-card">
+        <dl class="conversation-meta-list">
+          <div>
+            <dt>Started</dt>
+            <dd>{conversation.startedAt ?? "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Updated</dt>
+            <dd>{conversation.lastUpdatedAt ?? "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Current model</dt>
+            <dd>{conversation.currentModel ?? "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Session file</dt>
+            <dd><code>{conversation.sessionFileName}</code></dd>
+          </div>
+          <div>
+            <dt>Stored at</dt>
+            <dd><code>{conversation.sessionPath}</code></dd>
+          </div>
+          <div>
+            <dt>Messages</dt>
+            <dd>{conversation.messageCount}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="transcript-list">
+        {conversation.entries.map((entry) => (
+          <article class:list={{
+            "card": true,
+            "transcript-entry": true,
+            "transcript-entry--user": entry.kind === "user",
+            "transcript-entry--assistant": entry.kind === "assistant",
+            "transcript-entry--tool": entry.kind === "tool-result" || entry.kind === "bash-execution",
+            "transcript-entry--system": entry.kind === "model-change" || entry.kind === "thinking-level-change" || entry.kind === "system" || entry.kind === "custom",
+            "transcript-entry--error": entry.isError,
+          }}>
+            <div class="transcript-entry__header">
+              <div>
+                <span class="transcript-entry__label">{entry.label}</span>
+                {entry.toolName && <span class="transcript-entry__meta"> · {entry.toolName}</span>}
+                {entry.command && <span class="transcript-entry__meta"> · <code>{entry.command}</code></span>}
+              </div>
+              {entry.timestamp && <time class="transcript-entry__time">{entry.timestamp}</time>}
+            </div>
+
+            {entry.text && entry.text.trim().length > 0 ? (
+              <pre class="plain-pre plain-pre--transcript">{entry.text}</pre>
+            ) : entry.preview ? (
+              <p class="meta">{entry.preview}</p>
+            ) : (
+              <p class="meta">No text payload stored for this entry.</p>
+            )}
+
+            {entry.toolCalls && entry.toolCalls.length > 0 && (
+              <div class="tool-call-list">
+                {entry.toolCalls.map((toolCall) => (
+                  <details class="tool-call-item">
+                    <summary>{toolCall.name}</summary>
+                    {toolCall.argumentsText && <pre class="plain-pre plain-pre--transcript">{toolCall.argumentsText}</pre>}
+                  </details>
+                ))}
+              </div>
+            )}
+
+            {entry.detailsText && (
+              <details class="details-panel">
+                <summary>Tool details</summary>
+                <pre class="plain-pre plain-pre--transcript">{entry.detailsText}</pre>
+              </details>
+            )}
+          </article>
+        ))}
+      </section>
+    </>
+  ) : (
+    <section class="card empty-state-card">
+      <h2>No saved conversation yet</h2>
+      <p class="meta">This agent does not have a stored interactive session in `.role-agent/sessions/` yet.</p>
+    </section>
+  )}
+</BaseLayout>

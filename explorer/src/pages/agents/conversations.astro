@@ -1,0 +1,85 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AgentsSectionTabs from "../../components/AgentsSectionTabs.astro";
+import { loadLatestRoleConversation } from "../../lib/session-history.ts";
+import { getWorkspaceRoot, listRoleIds, loadRole } from "../../lib/workspace.js";
+
+const root = getWorkspaceRoot();
+const roleIds = await listRoleIds(root);
+const roles = await Promise.all(roleIds.map((roleId) => loadRole(root, roleId)));
+const conversations = await Promise.all(roles.map((role) => loadLatestRoleConversation(role)));
+const savedConversationCount = conversations.filter((conversation) => conversation.sessionPath).length;
+---
+<BaseLayout title="Agent conversations">
+  <div class="breadcrumb">
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> → <a href="/agents">Agents</a> → Conversations
+  </div>
+  <div class="page-intro">
+    <h1>Latest agent conversations</h1>
+    <p class="meta">
+      {savedConversationCount} saved conversation{savedConversationCount !== 1 ? "s" : ""} across {roles.length} agent
+      {roles.length !== 1 ? "s" : ""}
+    </p>
+  </div>
+
+  <div class="page-with-sidebar">
+    <aside class="card section-sidebar">
+      <AgentsSectionTabs active="conversations" />
+    </aside>
+
+    <div class="section-content">
+      <section class="conversation-grid">
+        {conversations.map((conversation) => (
+          <article class="card conversation-card">
+            <div class="conversation-card__header">
+              <div>
+                <h2>{conversation.roleName}</h2>
+                <p class="meta">{conversation.roleDescription}</p>
+              </div>
+              <div class="conversation-card__actions">
+                <a class="action-button" href={conversation.agentHref}>Agent definition</a>
+                <a class="action-button action-button--secondary" href={conversation.conversationHref}>Open conversation</a>
+              </div>
+            </div>
+
+            {conversation.sessionPath ? (
+              <>
+                <dl class="conversation-meta-list">
+                  <div>
+                    <dt>Updated</dt>
+                    <dd>{conversation.lastUpdatedAt ?? "Unknown"}</dd>
+                  </div>
+                  <div>
+                    <dt>Model</dt>
+                    <dd>{conversation.currentModel ?? "Unknown"}</dd>
+                  </div>
+                  <div>
+                    <dt>Session file</dt>
+                    <dd><code>{conversation.sessionFileName}</code></dd>
+                  </div>
+                  <div>
+                    <dt>Messages</dt>
+                    <dd>{conversation.userMessageCount} user · {conversation.assistantMessageCount} assistant</dd>
+                  </div>
+                </dl>
+
+                <div class="conversation-previews">
+                  <section class="preview-panel">
+                    <span class="preview-panel__label">Last user message</span>
+                    <p>{conversation.lastUserMessage?.summary ?? "No saved user message."}</p>
+                  </section>
+                  <section class="preview-panel">
+                    <span class="preview-panel__label">Last assistant message</span>
+                    <p>{conversation.lastAssistantMessage?.summary ?? "No saved assistant message."}</p>
+                  </section>
+                </div>
+              </>
+            ) : (
+              <p class="meta">No saved conversation yet for this agent.</p>
+            )}
+          </article>
+        ))}
+      </section>
+    </div>
+  </div>
+</BaseLayout>
