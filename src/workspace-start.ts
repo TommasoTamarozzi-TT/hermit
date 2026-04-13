@@ -741,6 +741,11 @@ export async function runWorkspaceStartLoop(options: WorkspaceStartLoopOptions):
     imagePaths: string[] = [],
     options: { echoPrompt?: boolean } = {},
   ): void {
+    const requestedModelLabel = detectRequestedModelLabel(prompt);
+    if (requestedModelLabel) {
+      sessionController.updateActiveSessionModelLabel(requestedModelLabel);
+    }
+
     if (options.echoPrompt !== false) {
       ui.appendUserPrompt(prompt);
     }

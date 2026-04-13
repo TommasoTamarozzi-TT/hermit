@@ -99,6 +99,19 @@ export class InteractiveSessionController {
     return this.queuedFollowUpCount;
   }
 
+  updateActiveSessionModelLabel(modelLabel: string): void {
+    const normalized = modelLabel.trim();
+    if (!normalized || this.activeSession.modelLabel === normalized) {
+      return;
+    }
+
+    this.activeSession = {
+      ...this.activeSession,
+      modelLabel: normalized,
+    };
+    this.options.onActiveSessionChange?.(this.activeSession);
+  }
+
   queueFollowUp(prompt: string): boolean {
     if (this.turnState !== "running") {
       return false;
