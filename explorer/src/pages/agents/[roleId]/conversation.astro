@@ -23,7 +23,7 @@ const chatEntries = conversation.entries.filter((entry) => {
   <div class="breadcrumb">
     <a href="/">Raidyn Virtual Assistent - Explorer</a> →
     <a href="/agents">Agents</a> →
-    <a href="/agents/conversations">Chats</a> →
+    <a href="/agents/conversations">Conversations</a> →
     {role.name}
   </div>
 
@@ -34,7 +34,7 @@ const chatEntries = conversation.entries.filter((entry) => {
 
   <div class="page-actions">
     <a class="action-button" href={`/agents/${role.id}`}>Agent definition</a>
-    <a class="action-button action-button--secondary" href="/agents/conversations">All chats</a>
+    <a class="action-button action-button--secondary" href="/agents/conversations">All conversations</a>
   </div>
 
   {conversation.sessionPath ? (

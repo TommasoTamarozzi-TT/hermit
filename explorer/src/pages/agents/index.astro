@@ -107,7 +107,7 @@ const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel"
                       <p class="org-node__description">{role.description}</p>
                       <div class="org-node__actions">
                         <a class="action-button" href={role.href}>Agent definition</a>
-                        <a class="action-button action-button--secondary" href={role.conversationHref}>Last chat</a>
+                        <a class="action-button action-button--secondary" href={role.conversationHref}>Last conversation</a>
                       </div>
                     </article>
                   ))}
@@ -117,26 +117,6 @@ const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel"
               )}
             </div>
           </section>
-        </div>
-      </section>
-
-    </div>
-  </div>
-</BaseLayout>
-lass="section-title">Current role workspaces</h2>
-        <div class="entity-type-list">
-          {roles.map((role) => (
-            <div class="linked-list-item">
-              <div>
-                <strong>{role.name}</strong>
-                <span class="meta"> — {role.description}</span>
-              </div>
-              <div class="linked-list-item__actions">
-                <a class="action-button" href={`/agents/${role.id}`}>Agent definition</a>
-                <a class="action-button action-button--secondary" href={`/agents/${role.id}/conversation`}>Last conversation</a>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
     </div>

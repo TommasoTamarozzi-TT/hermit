@@ -12,7 +12,7 @@ const savedConversationCount = conversations.filter((conversation) => conversati
 ---
 <BaseLayout title="Agent conversations">
   <div class="breadcrumb">
-    <a href="/">Raidyn Virtual Assistent - Explorer</a> → <a href="/agents">Agents</a> → Chats
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> → <a href="/agents">Agents</a> → Conversations
   </div>
   <div class="page-intro">
     <h1>Latest agent conversations</h1>
@@ -38,7 +38,7 @@ const savedConversationCount = conversations.filter((conversation) => conversati
               </div>
               <div class="conversation-card__actions">
                 <a class="action-button" href={conversation.agentHref}>Agent definition</a>
-                <a class="action-button action-button--secondary" href={conversation.conversationHref}>Open conversation</a>
+                <a class="action-button action-button--secondary" href={conversation.conversationHref}>Last conversation</a>
               </div>
             </div>
 
