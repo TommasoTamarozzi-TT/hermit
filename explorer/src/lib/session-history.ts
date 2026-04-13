@@ -345,9 +345,7 @@ export async function loadLatestRoleConversation(role: RoleDefinition): Promise<
 
   const currentModel = latestModelChange?.provider && latestModelChange.modelId
     ? `${latestModelChange.provider}/${latestModelChange.modelId}`
-    : lastAssistantModel?.message?.provider && lastAssistantModel.message.model
-      ? `${lastAssistantModel.message.provider}/${lastAssistantModel.message.model}`
-      : undefined;
+    : formatModelIdentifier(lastAssistantModel?.message?.provider, lastAssistantModel?.message?.model);
 
   return {
     ...baseSummary,

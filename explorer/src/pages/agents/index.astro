@@ -106,8 +106,8 @@ const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel"
                       <h3 class="org-node__name">{role.name}</h3>
                       <p class="org-node__description">{role.description}</p>
                       <div class="org-node__actions">
-                        <a class="action-button" href={role.conversationHref}>Conversation</a>
-                        <a class="action-button action-button--secondary" href={role.href}>Details</a>
+                        <a class="action-button" href={role.href}>Agent definition</a>
+                        <a class="action-button action-button--secondary" href={role.conversationHref}>Last chat</a>
                       </div>
                     </article>
                   ))}

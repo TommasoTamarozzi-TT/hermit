@@ -19,7 +19,7 @@ Steps:
 3. Run `query-graph.ts` when you need relationship traversal, broken-reference checks, or path finding.
 4. Read only the returned `record.md` files.
 5. Run `inventory-entities.ts` only if you need typical companion files.
-6. Use `rg` on narrowed paths for exact text.
+6. Use `rg` on narrowed paths for exact text when it is installed; otherwise use `grep -RIn` on the narrowed paths.
 
 Commands:
 

@@ -824,6 +824,57 @@
     @apply mb-6 p-5 sm:p-6;
   }
 
+  .conversation-meta-list--compact {
+    @apply md:grid-cols-3 xl:grid-cols-3;
+  }
+
+  .chat-thread {
+    @apply grid gap-4;
+  }
+
+  .chat-message {
+    @apply p-5 sm:p-6;
+  }
+
+  .chat-message--user {
+    border-color: color-mix(in srgb, var(--color-link) 26%, var(--color-border));
+  }
+
+  .chat-message--assistant {
+    border-color: color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+  }
+
+  .chat-message__header {
+    @apply mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .chat-message__identity {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .chat-message__speaker {
+    @apply text-sm font-semibold uppercase tracking-[0.12em];
+    color: var(--color-heading);
+  }
+
+  .chat-message__model {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium;
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-muted));
+    color: var(--color-text-soft);
+    border: 1px solid var(--color-border);
+  }
+
+  .chat-message__time {
+    @apply text-sm;
+    color: var(--color-text-soft);
+  }
+
+  .plain-pre--chat {
+    @apply whitespace-pre-wrap break-words rounded-2xl p-4 text-sm leading-6;
+    border: 1px solid var(--color-border);
+    background: var(--color-pre-bg);
+  }
+
   .transcript-list {
     @apply grid gap-4;
   }
