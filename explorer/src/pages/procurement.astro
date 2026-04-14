@@ -193,17 +193,24 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
   </section>
 
   {stages.length > 0 && (
-    <section class="file-section card">
-      <h2>Workflow stages</h2>
-      <div class="stage-list">
-        {stages.map((stage) => (
-          <div class={`stage-row stage-row--${stage.status}`}>
-            <span class="stage-label">{stage.label}</span>
-            <span class={`stage-status stage-status--${stage.status}`}>{statusLabel(stage.status)}</span>
-          </div>
-        ))}
+    <details class="file-section card procurement-section">
+      <summary class="procurement-section-summary">
+        <div>
+          <span class="procurement-section-title">Progress</span>
+          <div class="meta">Workflow stages</div>
+        </div>
+      </summary>
+      <div class="procurement-section-body">
+        <div class="stage-list">
+          {stages.map((stage) => (
+            <div class={`stage-row stage-row--${stage.status}`}>
+              <span class="stage-label">{stage.label}</span>
+              <span class={`stage-status stage-status--${stage.status}`}>{statusLabel(stage.status)}</span>
+            </div>
+          ))}
+        </div>
       </div>
-    </section>
+    </details>
   )}
 
   {curatedSections.map((section) => (
