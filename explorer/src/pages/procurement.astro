@@ -40,11 +40,40 @@ interface ProgressFile {
   stages?: ProgressStage[];
 }
 
+interface SupplierEntry {
+  name: string;
+  confidence: string;
+  source_domains: string[];
+  website?: string;
+  email_addresses?: string[];
+  main_contacts?: string[];
+  location?: string;
+  recurrent_products?: string[];
+  total_spend?: string;
+  slack_evidence?: string;
+  notes?: string;
+}
+
+interface SupplierSection {
+  id: string;
+  label: string;
+  suppliers: SupplierEntry[];
+}
+
+interface SupplierDirectoryFile {
+  generated_at?: string;
+  email_since?: string;
+  slack_checked?: boolean;
+  method_note?: string;
+  sections?: SupplierSection[];
+}
+
 const root = getWorkspaceRoot();
 const workItemPath = path.join(root, "entities", "work-items", "wi-build-supplier-directory-from-email-history");
 const artifactsPath = path.join(workItemPath, "artifacts");
 const scanPath = path.join(artifactsPath, "domain-scan.json");
 const progressPath = path.join(artifactsPath, "progress.json");
+const supplierDirectoryPath = path.join(artifactsPath, "supplier-directory.json");
 
 async function readJson<T>(filePath: string): Promise<T | undefined> {
   try {
@@ -85,9 +114,10 @@ function formatPercent(value: number): string {
   return `${Math.round(value)}%`;
 }
 
-const [scan, progress, scanStat] = await Promise.all([
+const [scan, progress, supplierDirectory, scanStat] = await Promise.all([
   readJson<ScanFile>(scanPath),
   readJson<ProgressFile>(progressPath),
+  readJson<SupplierDirectoryFile>(supplierDirectoryPath),
   fs.stat(scanPath).catch(() => undefined),
 ]);
 
@@ -100,8 +130,13 @@ const summary = scan?.summary ?? [];
 const candidateCount = summary.length;
 const amountCoverageCount = summary.filter((row) => (row.amountMentions?.length ?? 0) > 0).length;
 const spendCoverage = candidateCount > 0 ? (amountCoverageCount / candidateCount) * 100 : 0;
-const topCandidates = summary.slice(0, 20);
 const lastUpdatedAt = scanStat?.mtime?.toISOString();
+
+const curatedSections = supplierDirectory?.sections ?? [];
+const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + section.suppliers.length, 0);
+const curatedDomains = new Set(curatedSections.flatMap((section) => section.suppliers.flatMap((supplier) => supplier.source_domains || [])));
+const rawRemainingCandidates = summary.filter((candidate) => !curatedDomains.has(candidate.domain));
+const topRawRemainingCandidates = rawRemainingCandidates.slice(0, 40);
 ---
 <BaseLayout title="Procurement">
   <div class="breadcrumb">
@@ -109,7 +144,7 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
   </div>
   <div class="page-intro">
     <h1>Procurement</h1>
-    <p class="meta">Temporary live status page for the supplier-mapping job. The final foldable supplier directory will replace this build-phase view.</p>
+    <p class="meta">Supplier directory built from emails from June 2025 onward, with light Slack cross-checking used only as secondary context.</p>
   </div>
 
   <section class="file-section card">
@@ -118,7 +153,7 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
       <div class="metric-card metric-card--primary">
         <span class="label">Completion</span>
         <div class="value">{formatPercent(completion)}</div>
-        <div class="subvalue">Coarse workflow progress</div>
+        <div class="subvalue">Current procurement-directory workflow progress</div>
       </div>
       <div class="metric-card">
         <span class="label">Scan status</span>
@@ -126,19 +161,29 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
         <div class="subvalue">Mailbox-first supplier mapping</div>
       </div>
       <div class="metric-card">
-        <span class="label">Suppliers found so far</span>
+        <span class="label">Curated suppliers</span>
+        <div class="value">{curatedSupplierCount}</div>
+        <div class="subvalue">Cleaned supplier entries with requested fields</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Raw candidates found</span>
         <div class="value">{candidateCount}</div>
         <div class="subvalue">Automatically detected candidate domains</div>
       </div>
       <div class="metric-card">
         <span class="label">Spend-evidence coverage</span>
         <div class="value">{formatPercent(spendCoverage)}</div>
-        <div class="subvalue">Candidates with at least one amount mention</div>
+        <div class="subvalue">Candidates with at least one visible amount mention</div>
       </div>
       <div class="metric-card">
         <span class="label">Email window</span>
-        <div class="value value--small">{scan?.since ? scan.since.slice(0, 10) : progress?.scope?.email_since?.slice(0, 10) ?? "Unknown"}</div>
+        <div class="value value--small">{scan?.since ? scan.since.slice(0, 10) : progress?.scope?.email_since?.slice(0, 10) ?? supplierDirectory?.email_since?.slice(0, 10) ?? "Unknown"}</div>
         <div class="subvalue">Messages on or after this date</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Slack checked</span>
+        <div class="value">{supplierDirectory?.slack_checked ? "Yes" : "No"}</div>
+        <div class="subvalue">Used only as secondary supporting context</div>
       </div>
       <div class="metric-card">
         <span class="label">Last update</span>
@@ -147,6 +192,7 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
       </div>
     </div>
     {progress?.summary && <p class="meta progress-note">{progress.summary}</p>}
+    {supplierDirectory?.method_note && <p class="meta progress-note">{supplierDirectory.method_note}</p>}
   </section>
 
   {stages.length > 0 && (
@@ -163,14 +209,74 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
     </section>
   )}
 
-  <section class="file-section card">
-    <h2>Top supplier candidates so far</h2>
-    <p class="meta section-note">This is a rough detection pass, not yet a cleaned supplier directory. Domains may later be merged, dropped, or reclassified.</p>
-
-    {topCandidates.length > 0 ? (
+  {curatedSections.map((section) => (
+    <section class="file-section card">
+      <h2>{section.label}</h2>
       <div class="candidate-list">
-        {topCandidates.map((candidate) => (
+        {section.suppliers.map((supplier) => (
           <details class="candidate-card">
+            <summary class="candidate-summary">
+              <div>
+                <strong>{supplier.name}</strong>
+                <div class="meta">{supplier.confidence}</div>
+              </div>
+              <div class="candidate-summary-metrics">
+                <span>{supplier.total_spend || "Spend unknown"}</span>
+              </div>
+            </summary>
+            <div class="candidate-body">
+              <div class="candidate-detail-grid">
+                <div>
+                  <span class="label">Emails</span>
+                  <div>{supplier.email_addresses?.length ? supplier.email_addresses.join(", ") : "Unknown"}</div>
+                </div>
+                <div>
+                  <span class="label">Main contacts</span>
+                  <div>{supplier.main_contacts?.length ? supplier.main_contacts.join(", ") : "Unknown"}</div>
+                </div>
+                <div>
+                  <span class="label">Website</span>
+                  <div>
+                    {supplier.website ? <a href={supplier.website} target="_blank" rel="noreferrer">{supplier.website}</a> : "Unknown"}
+                  </div>
+                </div>
+                <div>
+                  <span class="label">Location</span>
+                  <div>{supplier.location || "Unknown"}</div>
+                </div>
+                <div>
+                  <span class="label">Recurrent products bought</span>
+                  <div>{supplier.recurrent_products?.length ? supplier.recurrent_products.join(" · ") : "Unknown"}</div>
+                </div>
+                <div>
+                  <span class="label">Total spend</span>
+                  <div>{supplier.total_spend || "Unknown"}</div>
+                </div>
+                <div>
+                  <span class="label">Slack check</span>
+                  <div>{supplier.slack_evidence || "No supporting Slack evidence recorded."}</div>
+                </div>
+                <div>
+                  <span class="label">Source domains</span>
+                  <div>{supplier.source_domains?.length ? supplier.source_domains.join(", ") : "Unknown"}</div>
+                </div>
+              </div>
+              {supplier.notes && <p class="meta supplier-note">{supplier.notes}</p>}
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  ))}
+
+  <section class="file-section card">
+    <h2>Additional raw candidates still under review</h2>
+    <p class="meta section-note">These candidates were detected in the mailbox pass but are not yet cleaned into curated supplier entries. This keeps the full possible-supplier surface visible instead of hiding anything uncertain.</p>
+
+    {topRawRemainingCandidates.length > 0 ? (
+      <div class="candidate-list">
+        {topRawRemainingCandidates.map((candidate) => (
+          <details class="candidate-card candidate-card--muted">
             <summary class="candidate-summary">
               <div>
                 <strong>{candidate.domain}</strong>
@@ -205,7 +311,7 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
         ))}
       </div>
     ) : (
-      <p class="meta">No supplier candidates have been saved yet.</p>
+      <p class="meta">No uncategorized raw candidates remain in the current saved scan.</p>
     )}
   </section>
 </BaseLayout>
@@ -251,7 +357,8 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
 
   .subvalue,
   .progress-note,
-  .section-note {
+  .section-note,
+  .supplier-note {
     font-size: 0.9rem;
     opacity: 0.8;
   }
@@ -307,6 +414,10 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
     overflow: hidden;
   }
 
+  .candidate-card--muted {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
   .candidate-summary {
     list-style: none;
     display: flex;
@@ -339,5 +450,9 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
+  }
+
+  .supplier-note {
+    margin-top: 1rem;
   }
 </style>
