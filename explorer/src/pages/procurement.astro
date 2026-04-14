@@ -1,0 +1,343 @@
+---
+import path from "node:path";
+import { promises as fs } from "node:fs";
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getWorkspaceRoot } from "../lib/workspace.js";
+
+interface ScanRow {
+  domain: string;
+  sampleEmail: string;
+  sampleName: string;
+  messageCount: number;
+  procurementMessageCount: number;
+  amountMentions: string[];
+  latestMessageAt: string | null;
+  subjects: string[];
+}
+
+interface ScanFile {
+  fetched?: number;
+  since?: string;
+  included?: number;
+  summary?: ScanRow[];
+}
+
+interface ProgressStage {
+  id: string;
+  label: string;
+  status: "done" | "in_progress" | "pending";
+}
+
+interface ProgressFile {
+  status?: string;
+  summary?: string;
+  scope?: {
+    email_since?: string;
+    slack_enabled?: boolean;
+    spend_rule?: string;
+  };
+  stages?: ProgressStage[];
+}
+
+const root = getWorkspaceRoot();
+const workItemPath = path.join(root, "entities", "work-items", "wi-build-supplier-directory-from-email-history");
+const artifactsPath = path.join(workItemPath, "artifacts");
+const scanPath = path.join(artifactsPath, "domain-scan.json");
+const progressPath = path.join(artifactsPath, "progress.json");
+
+async function readJson<T>(filePath: string): Promise<T | undefined> {
+  try {
+    return JSON.parse(await fs.readFile(filePath, "utf8")) as T;
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
+    if (code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function statusLabel(status: ProgressStage["status"]): string {
+  if (status === "done") return "Done";
+  if (status === "in_progress") return "In progress";
+  return "Pending";
+}
+
+function statusWeight(status: ProgressStage["status"]): number {
+  if (status === "done") return 1;
+  if (status === "in_progress") return 0.5;
+  return 0;
+}
+
+function formatDateTime(value?: string | null): string {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Brussels",
+  }).format(date);
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value)}%`;
+}
+
+const [scan, progress, scanStat] = await Promise.all([
+  readJson<ScanFile>(scanPath),
+  readJson<ProgressFile>(progressPath),
+  fs.stat(scanPath).catch(() => undefined),
+]);
+
+const stages = progress?.stages ?? [];
+const completion = stages.length > 0
+  ? (stages.reduce((sum, stage) => sum + statusWeight(stage.status), 0) / stages.length) * 100
+  : 0;
+
+const summary = scan?.summary ?? [];
+const candidateCount = summary.length;
+const amountCoverageCount = summary.filter((row) => (row.amountMentions?.length ?? 0) > 0).length;
+const spendCoverage = candidateCount > 0 ? (amountCoverageCount / candidateCount) * 100 : 0;
+const topCandidates = summary.slice(0, 20);
+const lastUpdatedAt = scanStat?.mtime?.toISOString();
+---
+<BaseLayout title="Procurement">
+  <div class="breadcrumb">
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> → Procurement
+  </div>
+  <div class="page-intro">
+    <h1>Procurement</h1>
+    <p class="meta">Temporary live status page for the supplier-mapping job. The final foldable supplier directory will replace this build-phase view.</p>
+  </div>
+
+  <section class="file-section card">
+    <h2>Progress</h2>
+    <div class="progress-grid">
+      <div class="metric-card metric-card--primary">
+        <span class="label">Completion</span>
+        <div class="value">{formatPercent(completion)}</div>
+        <div class="subvalue">Coarse workflow progress</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Scan status</span>
+        <div class="value">{progress?.status === "in_progress" ? "In progress" : progress?.status ?? "Not started"}</div>
+        <div class="subvalue">Mailbox-first supplier mapping</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Suppliers found so far</span>
+        <div class="value">{candidateCount}</div>
+        <div class="subvalue">Automatically detected candidate domains</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Spend-evidence coverage</span>
+        <div class="value">{formatPercent(spendCoverage)}</div>
+        <div class="subvalue">Candidates with at least one amount mention</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Email window</span>
+        <div class="value value--small">{scan?.since ? scan.since.slice(0, 10) : progress?.scope?.email_since?.slice(0, 10) ?? "Unknown"}</div>
+        <div class="subvalue">Messages on or after this date</div>
+      </div>
+      <div class="metric-card">
+        <span class="label">Last update</span>
+        <div class="value value--small">{formatDateTime(lastUpdatedAt)}</div>
+        <div class="subvalue">Latest saved scan artifact</div>
+      </div>
+    </div>
+    {progress?.summary && <p class="meta progress-note">{progress.summary}</p>}
+  </section>
+
+  {stages.length > 0 && (
+    <section class="file-section card">
+      <h2>Workflow stages</h2>
+      <div class="stage-list">
+        {stages.map((stage) => (
+          <div class={`stage-row stage-row--${stage.status}`}>
+            <span class="stage-label">{stage.label}</span>
+            <span class={`stage-status stage-status--${stage.status}`}>{statusLabel(stage.status)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section class="file-section card">
+    <h2>Top supplier candidates so far</h2>
+    <p class="meta section-note">This is a rough detection pass, not yet a cleaned supplier directory. Domains may later be merged, dropped, or reclassified.</p>
+
+    {topCandidates.length > 0 ? (
+      <div class="candidate-list">
+        {topCandidates.map((candidate) => (
+          <details class="candidate-card">
+            <summary class="candidate-summary">
+              <div>
+                <strong>{candidate.domain}</strong>
+                <div class="meta">{candidate.sampleEmail}</div>
+              </div>
+              <div class="candidate-summary-metrics">
+                <span>{candidate.procurementMessageCount} procurement hits</span>
+                <span>{candidate.messageCount} messages</span>
+              </div>
+            </summary>
+            <div class="candidate-body">
+              <div class="candidate-detail-grid">
+                <div>
+                  <span class="label">Sample contact</span>
+                  <div>{candidate.sampleName || "Unknown"}</div>
+                </div>
+                <div>
+                  <span class="label">Latest activity</span>
+                  <div>{formatDateTime(candidate.latestMessageAt)}</div>
+                </div>
+                <div>
+                  <span class="label">Amount mentions</span>
+                  <div>{candidate.amountMentions?.length ? candidate.amountMentions.join(", ") : "None captured yet"}</div>
+                </div>
+                <div>
+                  <span class="label">Recent procurement-style subjects</span>
+                  <div>{candidate.subjects?.length ? candidate.subjects.slice(0, 3).join(" · ") : "None captured yet"}</div>
+                </div>
+              </div>
+            </div>
+          </details>
+        ))}
+      </div>
+    ) : (
+      <p class="meta">No supplier candidates have been saved yet.</p>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .metric-card {
+    padding: 0.9rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .metric-card--primary {
+    border-color: rgba(84, 145, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(84, 145, 255, 0.2) inset;
+  }
+
+  .label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-bottom: 0.35rem;
+  }
+
+  .value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .value--small {
+    font-size: 1rem;
+  }
+
+  .subvalue,
+  .progress-note,
+  .section-note {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+
+  .progress-note {
+    margin-top: 1rem;
+  }
+
+  .stage-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .stage-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .stage-status {
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .stage-status--done {
+    color: #7dd3a7;
+  }
+
+  .stage-status--in_progress {
+    color: #8db8ff;
+  }
+
+  .stage-status--pending {
+    color: #d1d5db;
+  }
+
+  .candidate-list {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .candidate-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+  }
+
+  .candidate-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+  }
+
+  .candidate-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .candidate-summary-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .candidate-body {
+    padding: 0 1.1rem 1rem;
+  }
+
+  .candidate-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+</style>
