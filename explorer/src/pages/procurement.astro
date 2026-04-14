@@ -190,17 +190,12 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
     </div>
     {progress?.summary && <p class="meta progress-note">{progress.summary}</p>}
     {supplierDirectory?.method_note && <p class="meta progress-note">{supplierDirectory.method_note}</p>}
-  </section>
-
-  {stages.length > 0 && (
-    <details class="file-section card procurement-section">
-      <summary class="procurement-section-summary">
-        <div>
-          <span class="procurement-section-title">Progress</span>
-          <div class="meta">Workflow stages</div>
-        </div>
-      </summary>
-      <div class="procurement-section-body">
+    {stages.length > 0 && (
+      <details class="workflow-stages-toggle">
+        <summary class="workflow-stages-summary">
+          <span class="workflow-stages-title">Workflow stages</span>
+          <span class="meta">Open stage-by-stage progress</span>
+        </summary>
         <div class="stage-list">
           {stages.map((stage) => (
             <div class={`stage-row stage-row--${stage.status}`}>
@@ -209,9 +204,9 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
             </div>
           ))}
         </div>
-      </div>
-    </details>
-  )}
+      </details>
+    )}
+  </section>
 
   {curatedSections.map((section) => (
     <details class="file-section card procurement-section" open>
@@ -332,10 +327,37 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
     margin-top: 1rem;
   }
 
+  .workflow-stages-toggle {
+    margin-top: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+  }
+
+  .workflow-stages-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+  }
+
+  .workflow-stages-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .workflow-stages-title {
+    font-weight: 700;
+  }
+
   .stage-list {
     display: grid;
     gap: 0.75rem;
     margin-top: 1rem;
+    padding: 0 1.1rem 1rem;
   }
 
   .stage-row {
