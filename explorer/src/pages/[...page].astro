@@ -9,6 +9,10 @@ if (!pageKey) {
   return Astro.redirect("/");
 }
 
+if (pageKey === "daily-digest" || pageKey === "slack-summary") {
+  return Astro.redirect("/tables");
+}
+
 const root = getWorkspaceRoot();
 const { explorer } = await loadEntityDefs(root);
 const renderedPage = await renderExplorerCustomPage({ root, explorer, pageKey });

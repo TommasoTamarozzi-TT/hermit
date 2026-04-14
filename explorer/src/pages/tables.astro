@@ -45,24 +45,12 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
     <p class="meta">Live operational summaries for unread email, forward-looking calendar days, Slack activity, and the latest digest snapshot.</p>
   </div>
 
-  <div class="entity-type-list table-link-list">
-    <a href="/daily-digest">
-      <strong class="link-title">Daily Digest page</strong>
-      <span class="meta"> — open the standalone digest view</span>
-    </a>
-    <a href="/slack-summary">
-      <strong class="link-title">Slack Summary page</strong>
-      <span class="meta"> — open the standalone Slack summary</span>
-    </a>
-  </div>
-
   <details class="file-section card foldable-card" open>
     <summary class="foldable-summary">
       <span class="foldable-title">Unread email view</span>
       <span class="foldable-meta">Open the latest unread email snapshot</span>
     </summary>
     <div class="foldable-body foldable-body--flush">
-      <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
       {unreadHtml ? (
         <div class="markdown-body" set:html={unreadHtml} />
       ) : (
@@ -77,7 +65,6 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
       <span class="foldable-meta">Open the forward-looking calendar action view</span>
     </summary>
     <div class="foldable-body foldable-body--flush">
-      <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
       {calendarHtml ? (
         <div class="markdown-body" set:html={calendarHtml} />
       ) : (
@@ -92,7 +79,6 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
       <span class="foldable-meta">Open the latest Slack activity snapshot</span>
     </summary>
     <div class="foldable-body foldable-body--flush">
-      <div class="section-link-row"><a href="/slack-summary">Open full Slack Summary page</a></div>
       {slackHtml ? (
         <div class="markdown-body" set:html={slackHtml} />
       ) : (
@@ -107,7 +93,6 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
       <span class="foldable-meta">Open the full generated digest snapshot</span>
     </summary>
     <div class="foldable-body foldable-body--flush">
-      <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
       {digestHtml ? (
         <div class="markdown-body" set:html={digestHtml} />
       ) : (
@@ -117,16 +102,3 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
   </details>
 </BaseLayout>
 
-<style>
-  .section-link-row {
-    padding: 0.9rem 1.5rem 0;
-  }
-
-  .table-link-list {
-    margin-bottom: 1.5rem;
-  }
-
-  .link-title {
-    display: block;
-  }
-</style>
