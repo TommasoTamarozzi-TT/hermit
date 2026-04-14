@@ -21,12 +21,12 @@ const { headOfOperations, reports: virtualReports } = getVirtualAgentsData(roles
 const directTeamMembers = teamMembers.filter((person) => !person.reportsTo);
 const pavelReports = teamMembers.filter((person) => person.reportsTo === "pavel");
 ---
-<BaseLayout title="Agents">
+<BaseLayout title="Orgchart">
   <div class="breadcrumb">
-    <a href="/">Raidyn Virtual Assistent - Explorer</a> → Agents
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> → Orgchart
   </div>
   <div class="page-intro">
-    <h1>Agents</h1>
+    <h1>Orgchart</h1>
     <p class="meta">
       {teamMembers.length} team member{teamMembers.length !== 1 ? "s" : ""} and {roles.length} virtual role
       {roles.length !== 1 ? "s" : ""}

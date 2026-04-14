@@ -20,9 +20,7 @@ const linkClass = mobile ? "nav-link nav-link--stacked" : "nav-link";
 <a class={linkClass} href="/secretariat">Secretariat</a>
 <a class={linkClass} href="/procurement">Procurement</a>
 <a class={linkClass} href="/operational-business">Operational Business</a>
-<a class={linkClass} href="/entities">Entities</a>
-<a class={linkClass} href="/agents">Agents</a>
+<a class={linkClass} href="/hermit-info">Hermit info</a>
+<a class={linkClass} href="/agents">Orgchart</a>
 {customPageLinks.map((link) => <a class={linkClass} href={link.href}>{link.label}</a>)}
-<a class={linkClass} href="/architecture">Architecture</a>
-<a class={linkClass} href="/license">License</a>
 {roleId && <a class={linkClass} href={`/agents/${roleId}`}>{roleName ?? roleId}</a>}
