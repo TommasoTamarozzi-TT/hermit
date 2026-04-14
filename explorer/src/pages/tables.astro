@@ -4,11 +4,9 @@ import { promises as fs } from "node:fs";
 
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { renderMarkdown } from "../lib/renderers.js";
-import { formatCurrency, formatInteger, getUsageForPeriod } from "../lib/openai-usage.js";
 import { getWorkspaceRoot } from "../lib/workspace.js";
 
 const root = getWorkspaceRoot();
-const timeZone = "Europe/Brussels";
 const digestWorkItemPath = path.join(root, "entities", "work-items", "wi-set-up-daily-email-and-calendar-digest");
 const slackWorkItemPath = path.join(root, "entities", "work-items", "wi-set-up-slack-unread-summary-table");
 
@@ -23,10 +21,6 @@ async function readMarkdownFile(filePath: string): Promise<string | undefined> {
     throw error;
   }
 }
-
-const now = new Date();
-const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-const todayTotals = await getUsageForPeriod(root, todayStart, now);
 
 const [unreadMarkdown, calendarMarkdown, slackMarkdown, digestMarkdown] = await Promise.all([
   readMarkdownFile(path.join(digestWorkItemPath, "unread-email-explorer.md")),
@@ -51,21 +45,6 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
     <p class="meta">Live operational summaries for unread email, forward-looking calendar days, Slack activity, and the latest digest snapshot.</p>
   </div>
 
-  <section class="file-section card">
-    <h2>OpenAI usage today</h2>
-    <div class="usage-grid">
-      <div class="usage-item">
-        <span class="label">Estimated cost</span>
-        <div class="value">{formatCurrency(todayTotals.cost)}</div>
-      </div>
-      <div class="usage-item">
-        <span class="label">Used tokens</span>
-        <div class="value">{formatInteger(todayTotals.tokens)}</div>
-      </div>
-    </div>
-    <p class="meta usage-meta">Today so far in {timeZone}. Counted from {formatInteger(todayTotals.entries)} recorded OpenAI usage entries across Hermit and role-agent sessions.</p>
-  </section>
-
   <div class="entity-type-list table-link-list">
     <a href="/daily-digest">
       <strong class="link-title">Daily Digest page</strong>
@@ -77,92 +56,68 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
     </a>
   </div>
 
-  {unreadHtml ? (
-    <section class="file-section card">
-      <h2>Unread email view</h2>
+  <details class="file-section card foldable-card" open>
+    <summary class="foldable-summary">
+      <span class="foldable-title">Unread email view</span>
+      <span class="foldable-meta">Open the latest unread email snapshot</span>
+    </summary>
+    <div class="foldable-body foldable-body--flush">
       <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
-      <div class="markdown-body" set:html={unreadHtml} />
-    </section>
-  ) : (
-    <section class="file-section card">
-      <h2>Unread email view</h2>
-      <div class="markdown-body"><p>No unread email snapshot has been generated yet.</p></div>
-    </section>
-  )}
+      {unreadHtml ? (
+        <div class="markdown-body" set:html={unreadHtml} />
+      ) : (
+        <div class="markdown-body"><p>No unread email snapshot has been generated yet.</p></div>
+      )}
+    </div>
+  </details>
 
-  {calendarHtml ? (
-    <section class="file-section card">
-      <h2>Calendar action days</h2>
+  <details class="file-section card foldable-card">
+    <summary class="foldable-summary">
+      <span class="foldable-title">Calendar action days</span>
+      <span class="foldable-meta">Open the forward-looking calendar action view</span>
+    </summary>
+    <div class="foldable-body foldable-body--flush">
       <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
-      <div class="markdown-body" set:html={calendarHtml} />
-    </section>
-  ) : (
-    <section class="file-section card">
-      <h2>Calendar action days</h2>
-      <div class="markdown-body"><p>No calendar action snapshot has been generated yet.</p></div>
-    </section>
-  )}
+      {calendarHtml ? (
+        <div class="markdown-body" set:html={calendarHtml} />
+      ) : (
+        <div class="markdown-body"><p>No calendar action snapshot has been generated yet.</p></div>
+      )}
+    </div>
+  </details>
 
-  {slackHtml ? (
-    <section class="file-section card">
-      <h2>Slack summary</h2>
+  <details class="file-section card foldable-card">
+    <summary class="foldable-summary">
+      <span class="foldable-title">Slack summary</span>
+      <span class="foldable-meta">Open the latest Slack activity snapshot</span>
+    </summary>
+    <div class="foldable-body foldable-body--flush">
       <div class="section-link-row"><a href="/slack-summary">Open full Slack Summary page</a></div>
-      <div class="markdown-body" set:html={slackHtml} />
-    </section>
-  ) : (
-    <section class="file-section card">
-      <h2>Slack summary</h2>
-      <div class="markdown-body"><p>No Slack summary has been generated yet.</p></div>
-    </section>
-  )}
+      {slackHtml ? (
+        <div class="markdown-body" set:html={slackHtml} />
+      ) : (
+        <div class="markdown-body"><p>No Slack summary has been generated yet.</p></div>
+      )}
+    </div>
+  </details>
 
-  {digestHtml && (
-    <details class="file-section card foldable-card">
-      <summary class="foldable-summary">
-        <span class="foldable-title">Latest digest email</span>
-        <span class="foldable-meta">Open the full generated digest snapshot</span>
-      </summary>
-      <div class="foldable-body foldable-body--flush">
-        <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
+  <details class="file-section card foldable-card">
+    <summary class="foldable-summary">
+      <span class="foldable-title">Latest digest email</span>
+      <span class="foldable-meta">Open the full generated digest snapshot</span>
+    </summary>
+    <div class="foldable-body foldable-body--flush">
+      <div class="section-link-row"><a href="/daily-digest">Open full Daily Digest page</a></div>
+      {digestHtml ? (
         <div class="markdown-body" set:html={digestHtml} />
-      </div>
-    </details>
-  )}
+      ) : (
+        <div class="markdown-body"><p>No digest snapshot has been generated yet.</p></div>
+      )}
+    </div>
+  </details>
 </BaseLayout>
 
 <style>
-  .usage-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    padding: 1.25rem 1.5rem 0;
-  }
-
-  .usage-item {
-    padding: 0.85rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .usage-item .label {
-    display: block;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.7;
-    margin-bottom: 0.35rem;
-  }
-
-  .usage-item .value {
-    font-size: 1.3rem;
-    font-weight: 700;
-  }
-
-  .usage-meta {
-    padding: 0 1.5rem 1.25rem;
-  }
-
   .section-link-row {
     padding: 0.9rem 1.5rem 0;
   }
