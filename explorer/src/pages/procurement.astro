@@ -134,9 +134,6 @@ const lastUpdatedAt = scanStat?.mtime?.toISOString();
 
 const curatedSections = supplierDirectory?.sections ?? [];
 const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + section.suppliers.length, 0);
-const curatedDomains = new Set(curatedSections.flatMap((section) => section.suppliers.flatMap((supplier) => supplier.source_domains || [])));
-const rawRemainingCandidates = summary.filter((candidate) => !curatedDomains.has(candidate.domain));
-const topRawRemainingCandidates = rawRemainingCandidates.slice(0, 40);
 ---
 <BaseLayout title="Procurement">
   <div class="breadcrumb">
@@ -210,110 +207,71 @@ const topRawRemainingCandidates = rawRemainingCandidates.slice(0, 40);
   )}
 
   {curatedSections.map((section) => (
-    <section class="file-section card">
-      <h2>{section.label}</h2>
-      <div class="candidate-list">
-        {section.suppliers.map((supplier) => (
-          <details class="candidate-card">
-            <summary class="candidate-summary">
-              <div>
-                <strong>{supplier.name}</strong>
-                <div class="meta">{supplier.confidence}</div>
-              </div>
-              <div class="candidate-summary-metrics">
-                <span>{supplier.total_spend || "Spend unknown"}</span>
-              </div>
-            </summary>
-            <div class="candidate-body">
-              <div class="candidate-detail-grid">
+    <details class="file-section card procurement-section" open>
+      <summary class="procurement-section-summary">
+        <div>
+          <span class="procurement-section-title">{section.label}</span>
+          <div class="meta">{section.suppliers.length} supplier entries</div>
+        </div>
+      </summary>
+      <div class="procurement-section-body">
+        <div class="candidate-list">
+          {section.suppliers.map((supplier) => (
+            <details class="candidate-card">
+              <summary class="candidate-summary">
                 <div>
-                  <span class="label">Emails</span>
-                  <div>{supplier.email_addresses?.length ? supplier.email_addresses.join(", ") : "Unknown"}</div>
+                  <strong>{supplier.name}</strong>
+                  <div class="meta">{supplier.confidence}</div>
                 </div>
-                <div>
-                  <span class="label">Main contacts</span>
-                  <div>{supplier.main_contacts?.length ? supplier.main_contacts.join(", ") : "Unknown"}</div>
+                <div class="candidate-summary-metrics">
+                  <span>{supplier.total_spend || "Spend unknown"}</span>
                 </div>
-                <div>
-                  <span class="label">Website</span>
+              </summary>
+              <div class="candidate-body">
+                <div class="candidate-detail-grid">
                   <div>
-                    {supplier.website ? <a href={supplier.website} target="_blank" rel="noreferrer">{supplier.website}</a> : "Unknown"}
+                    <span class="label">Emails</span>
+                    <div>{supplier.email_addresses?.length ? supplier.email_addresses.join(", ") : "Unknown"}</div>
+                  </div>
+                  <div>
+                    <span class="label">Main contacts</span>
+                    <div>{supplier.main_contacts?.length ? supplier.main_contacts.join(", ") : "Unknown"}</div>
+                  </div>
+                  <div>
+                    <span class="label">Website</span>
+                    <div>
+                      {supplier.website ? <a href={supplier.website} target="_blank" rel="noreferrer">{supplier.website}</a> : "Unknown"}
+                    </div>
+                  </div>
+                  <div>
+                    <span class="label">Location</span>
+                    <div>{supplier.location || "Unknown"}</div>
+                  </div>
+                  <div>
+                    <span class="label">Recurrent products bought</span>
+                    <div>{supplier.recurrent_products?.length ? supplier.recurrent_products.join(" · ") : "Unknown"}</div>
+                  </div>
+                  <div>
+                    <span class="label">Total spend</span>
+                    <div>{supplier.total_spend || "Unknown"}</div>
+                  </div>
+                  <div>
+                    <span class="label">Slack check</span>
+                    <div>{supplier.slack_evidence || "No supporting Slack evidence recorded."}</div>
+                  </div>
+                  <div>
+                    <span class="label">Source domains</span>
+                    <div>{supplier.source_domains?.length ? supplier.source_domains.join(", ") : "Unknown"}</div>
                   </div>
                 </div>
-                <div>
-                  <span class="label">Location</span>
-                  <div>{supplier.location || "Unknown"}</div>
-                </div>
-                <div>
-                  <span class="label">Recurrent products bought</span>
-                  <div>{supplier.recurrent_products?.length ? supplier.recurrent_products.join(" · ") : "Unknown"}</div>
-                </div>
-                <div>
-                  <span class="label">Total spend</span>
-                  <div>{supplier.total_spend || "Unknown"}</div>
-                </div>
-                <div>
-                  <span class="label">Slack check</span>
-                  <div>{supplier.slack_evidence || "No supporting Slack evidence recorded."}</div>
-                </div>
-                <div>
-                  <span class="label">Source domains</span>
-                  <div>{supplier.source_domains?.length ? supplier.source_domains.join(", ") : "Unknown"}</div>
-                </div>
+                {supplier.notes && <p class="meta supplier-note">{supplier.notes}</p>}
               </div>
-              {supplier.notes && <p class="meta supplier-note">{supplier.notes}</p>}
-            </div>
-          </details>
-        ))}
+            </details>
+          ))}
+        </div>
       </div>
-    </section>
+    </details>
   ))}
-
-  <section class="file-section card">
-    <h2>Additional raw candidates still under review</h2>
-    <p class="meta section-note">These candidates were detected in the mailbox pass but are not yet cleaned into curated supplier entries. This keeps the full possible-supplier surface visible instead of hiding anything uncertain.</p>
-
-    {topRawRemainingCandidates.length > 0 ? (
-      <div class="candidate-list">
-        {topRawRemainingCandidates.map((candidate) => (
-          <details class="candidate-card candidate-card--muted">
-            <summary class="candidate-summary">
-              <div>
-                <strong>{candidate.domain}</strong>
-                <div class="meta">{candidate.sampleEmail}</div>
-              </div>
-              <div class="candidate-summary-metrics">
-                <span>{candidate.procurementMessageCount} procurement hits</span>
-                <span>{candidate.messageCount} messages</span>
-              </div>
-            </summary>
-            <div class="candidate-body">
-              <div class="candidate-detail-grid">
-                <div>
-                  <span class="label">Sample contact</span>
-                  <div>{candidate.sampleName || "Unknown"}</div>
-                </div>
-                <div>
-                  <span class="label">Latest activity</span>
-                  <div>{formatDateTime(candidate.latestMessageAt)}</div>
-                </div>
-                <div>
-                  <span class="label">Amount mentions</span>
-                  <div>{candidate.amountMentions?.length ? candidate.amountMentions.join(", ") : "None captured yet"}</div>
-                </div>
-                <div>
-                  <span class="label">Recent procurement-style subjects</span>
-                  <div>{candidate.subjects?.length ? candidate.subjects.slice(0, 3).join(" · ") : "None captured yet"}</div>
-                </div>
-              </div>
-            </div>
-          </details>
-        ))}
-      </div>
-    ) : (
-      <p class="meta">No uncategorized raw candidates remain in the current saved scan.</p>
-    )}
-  </section>
 </BaseLayout>
 
 <style>
@@ -401,6 +359,34 @@ const topRawRemainingCandidates = rawRemainingCandidates.slice(0, 40);
     color: #d1d5db;
   }
 
+  .procurement-section {
+    overflow: hidden;
+  }
+
+  .procurement-section-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+  }
+
+  .procurement-section-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .procurement-section-title {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .procurement-section-body {
+    padding: 0 1.1rem 1rem;
+  }
+
   .candidate-list {
     display: grid;
     gap: 0.85rem;
@@ -412,10 +398,6 @@ const topRawRemainingCandidates = rawRemainingCandidates.slice(0, 40);
     border-radius: 0.85rem;
     background: rgba(255, 255, 255, 0.03);
     overflow: hidden;
-  }
-
-  .candidate-card--muted {
-    background: rgba(255, 255, 255, 0.02);
   }
 
   .candidate-summary {
