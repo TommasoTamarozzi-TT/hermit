@@ -644,6 +644,106 @@
     color: var(--color-text);
   }
 
+  .home-todo-card {
+    @apply mt-8;
+  }
+
+  .todo-body {
+    @apply grid gap-5;
+  }
+
+  .todo-toolbar {
+    @apply flex flex-wrap items-center justify-between gap-3;
+  }
+
+  .todo-summary-badges {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .priority-pill {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em];
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text-soft);
+  }
+
+  .priority-pill--high {
+    border-color: color-mix(in srgb, #ef4444 32%, var(--color-border));
+    background: color-mix(in srgb, #ef4444 16%, var(--color-surface));
+    color: var(--color-heading);
+  }
+
+  .priority-pill--medium {
+    border-color: color-mix(in srgb, #f59e0b 32%, var(--color-border));
+    background: color-mix(in srgb, #f59e0b 16%, var(--color-surface));
+    color: var(--color-heading);
+  }
+
+  .priority-pill--low,
+  .priority-pill--neutral {
+    color: var(--color-text-soft);
+  }
+
+  .todo-reset-button,
+  .todo-delete-button {
+    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition;
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-input-bg);
+    color: var(--color-text);
+  }
+
+  .todo-reset-button:hover,
+  .todo-delete-button:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-input-bg));
+  }
+
+  .todo-category-grid {
+    @apply grid gap-4;
+  }
+
+  .todo-category-card {
+    @apply rounded-2xl p-5;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+  }
+
+  .todo-category-card__header {
+    @apply mb-4 flex flex-wrap items-start justify-between gap-3;
+  }
+
+  .todo-category-count {
+    @apply rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em];
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-soft);
+  }
+
+  .todo-item-list {
+    @apply grid gap-3;
+  }
+
+  .todo-item {
+    @apply flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-4;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .todo-item__content {
+    @apply grid gap-2;
+  }
+
+  .todo-item__label {
+    @apply m-0 text-sm font-medium leading-6;
+    color: var(--color-text);
+  }
+
+  .todo-empty-state {
+    @apply rounded-2xl border px-4 py-4;
+    border-color: var(--color-border);
+    background: var(--color-surface-muted);
+  }
+
   .linked-list-item {
     @apply flex flex-col gap-3 rounded-2xl px-5 py-4;
     border: 1px solid var(--color-border);

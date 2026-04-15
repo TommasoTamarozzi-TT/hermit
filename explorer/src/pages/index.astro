@@ -3,6 +3,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { renderExplorerHome } from "../lib/renderers.js";
 import { countEntitiesByDefinition, getWorkspaceRoot, loadEntityDefs } from "../lib/workspace.js";
 
+type TodoPriority = "high" | "medium" | "low";
+
+interface TodoItem {
+  id: string;
+  label: string;
+  priority: TodoPriority;
+}
+
+interface TodoCategory {
+  id: string;
+  title: string;
+  description: string;
+  items: TodoItem[];
+}
+
 const root = getWorkspaceRoot();
 const { entities: entityDefs, explorer } = await loadEntityDefs(root);
 const entityTypes = await Promise.all(
@@ -13,6 +28,66 @@ const entityTypes = await Promise.all(
 );
 const hasEntities = entityTypes.some(({ count }) => count > 0);
 const customHome = await renderExplorerHome({ root, explorer });
+
+const todoCategories: TodoCategory[] = [
+  {
+    id: "communication",
+    title: "Communication",
+    description: "External follow-up and outbound messages.",
+    items: [
+      {
+        id: "answer-dnv-about-testing-rope",
+        label: "Answer DNV about testing rope",
+        priority: "medium",
+      },
+      {
+        id: "send-email-to-arcelor",
+        label: "Send email to Arcelor",
+        priority: "high",
+      },
+    ],
+  },
+  {
+    id: "engineering",
+    title: "Engineering",
+    description: "Platform and technical enablement work.",
+    items: [
+      {
+        id: "allow-debug-production-code",
+        label: "Allow to debug production code",
+        priority: "high",
+      },
+    ],
+  },
+  {
+    id: "projects",
+    title: "Projects",
+    description: "Project preparation and proposal drafting.",
+    items: [
+      {
+        id: "write-project-about-sarens",
+        label: "Write project about Sarens",
+        priority: "high",
+      },
+    ],
+  },
+  {
+    id: "labeling",
+    title: "Data & Labeling",
+    description: "Dataset preparation and review work.",
+    items: [
+      {
+        id: "select-more-images-to-label",
+        label: "Select more images to label",
+        priority: "medium",
+      },
+    ],
+  },
+];
+
+const todoItems = todoCategories.flatMap((category) => category.items);
+const highPriorityCount = todoItems.filter((item) => item.priority === "high").length;
+const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium").length;
 ---
 <BaseLayout title={customHome?.title ?? "Raidyn Virtual Assistent - Explorer"}>
   {customHome ? (
@@ -67,4 +142,151 @@ const customHome = await renderExplorerHome({ root, explorer });
       </>
     </>
   )}
+
+  <section class="card foldable-card home-todo-card">
+    <details open data-home-todo>
+      <summary class="foldable-summary">
+        <div>
+          <div class="foldable-title">To-do list</div>
+          <p class="foldable-meta">Grouped by category, with the urgency you gave.</p>
+        </div>
+        <div class="todo-summary-badges">
+          <span class="priority-pill priority-pill--high">{highPriorityCount} high</span>
+          <span class="priority-pill priority-pill--medium">{mediumPriorityCount} medium</span>
+          <span class="priority-pill priority-pill--neutral">{todoItems.length} total</span>
+        </div>
+      </summary>
+
+      <div class="foldable-body todo-body">
+        <div class="todo-toolbar">
+          <p class="meta">Use <strong>Delete</strong> to hide completed items from this browser. Use <strong>Reset list</strong> to restore them.</p>
+          <button type="button" class="todo-reset-button" data-todo-reset>Reset list</button>
+        </div>
+
+        <div class="todo-category-grid" data-todo-category-grid>
+          {todoCategories.map((category) => (
+            <section class="todo-category-card" data-category-id={category.id}>
+              <div class="todo-category-card__header">
+                <div>
+                  <h3>{category.title}</h3>
+                  <p class="meta">{category.description}</p>
+                </div>
+                <span class="todo-category-count">{category.items.length} item{category.items.length === 1 ? "" : "s"}</span>
+              </div>
+
+              <ul class="todo-item-list">
+                {category.items.map((item) => (
+                  <li class="todo-item" data-todo-item data-todo-id={item.id}>
+                    <div class="todo-item__content">
+                      <span class={`priority-pill priority-pill--${item.priority}`}>{item.priority} priority</span>
+                      <p class="todo-item__label">{item.label}</p>
+                    </div>
+                    <button type="button" class="todo-delete-button" data-todo-delete={item.id} aria-label={`Delete ${item.label}`}>
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+
+        <p class="todo-empty-state meta" data-todo-empty hidden>All current tasks are hidden in this browser. Use Reset list to show them again.</p>
+      </div>
+    </details>
+  </section>
+
+  <script is:inline>
+    (() => {
+      const storageKey = "raidyn-home-hidden-todos";
+      const itemSelector = "[data-todo-item]";
+      const categorySelector = "[data-category-id]";
+      const emptyState = document.querySelector("[data-todo-empty]");
+      const summaryRoot = document.querySelector("[data-home-todo]");
+      const resetButton = document.querySelector("[data-todo-reset]");
+
+      const readHiddenIds = () => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
+          return Array.isArray(parsed) ? new Set(parsed.filter((value) => typeof value === "string")) : new Set();
+        } catch {
+          return new Set();
+        }
+      };
+
+      const writeHiddenIds = (hiddenIds) => {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(hiddenIds)));
+        } catch {
+          // Ignore storage failures and keep the UI responsive.
+        }
+      };
+
+      const updateCounts = () => {
+        const items = Array.from(document.querySelectorAll(itemSelector));
+        const visibleItems = items.filter((item) => !(item instanceof HTMLElement) || !item.hidden);
+        const highCount = visibleItems.filter((item) => item.querySelector(".priority-pill--high")).length;
+        const mediumCount = visibleItems.filter((item) => item.querySelector(".priority-pill--medium")).length;
+
+        const highBadge = summaryRoot?.querySelector(".priority-pill--high");
+        const mediumBadge = summaryRoot?.querySelector(".priority-pill--medium");
+        const totalBadge = summaryRoot?.querySelector(".priority-pill--neutral");
+
+        if (highBadge) highBadge.textContent = `${highCount} high`;
+        if (mediumBadge) mediumBadge.textContent = `${mediumCount} medium`;
+        if (totalBadge) totalBadge.textContent = `${visibleItems.length} total`;
+
+        if (emptyState instanceof HTMLElement) {
+          emptyState.hidden = visibleItems.length > 0;
+        }
+      };
+
+      const updateCategoryVisibility = () => {
+        document.querySelectorAll(categorySelector).forEach((category) => {
+          if (!(category instanceof HTMLElement)) {
+            return;
+          }
+          const visibleChildren = Array.from(category.querySelectorAll(itemSelector)).filter(
+            (item) => !(item instanceof HTMLElement) || !item.hidden,
+          );
+          category.hidden = visibleChildren.length === 0;
+        });
+      };
+
+      const applyHiddenIds = () => {
+        const hiddenIds = readHiddenIds();
+        document.querySelectorAll(itemSelector).forEach((item) => {
+          if (!(item instanceof HTMLElement)) {
+            return;
+          }
+          const todoId = item.dataset.todoId || "";
+          item.hidden = hiddenIds.has(todoId);
+        });
+        updateCategoryVisibility();
+        updateCounts();
+      };
+
+      document.querySelectorAll("[data-todo-delete]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const todoId = button.getAttribute("data-todo-delete");
+          if (!todoId) {
+            return;
+          }
+          const hiddenIds = readHiddenIds();
+          hiddenIds.add(todoId);
+          writeHiddenIds(hiddenIds);
+          applyHiddenIds();
+        });
+      });
+
+      if (resetButton instanceof HTMLButtonElement) {
+        resetButton.addEventListener("click", () => {
+          writeHiddenIds(new Set());
+          applyHiddenIds();
+        });
+      }
+
+      applyHiddenIds();
+    })();
+  </script>
 </BaseLayout>
