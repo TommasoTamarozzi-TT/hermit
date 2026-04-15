@@ -168,17 +168,17 @@ const rawTasks: TodoTaskInput[] = [
   },
   {
     label: "Clean code for analysis of one or multiple images",
-    priority: "needs-triage",
+    priority: "medium",
     category: "engineering",
   },
   {
     label: "Analyze data Vincent",
-    priority: "needs-triage",
+    priority: "medium",
     category: "engineering",
   },
   {
     label: "Aga review web",
-    priority: "needs-triage",
+    priority: "low",
     category: "marketing-web",
   },
 ];
@@ -264,7 +264,7 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
 
       <div class="foldable-body todo-body">
         <div class="todo-toolbar">
-          <p class="meta">Each category can be folded. <strong>Delete</strong> hides a task in this browser. <strong>Reset list</strong> restores hidden items. Tasks marked <strong>Needs priority</strong> were added without a priority in your message.</p>
+          <p class="meta">Each category can be folded. <strong>Delete</strong> hides a task in this browser. <strong>Reset list</strong> restores hidden items.</p>
           <button type="button" class="todo-reset-button" data-todo-reset>Reset list</button>
         </div>
 
@@ -336,7 +336,7 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
       };
 
       const visibleItems = () =>
-        Array.from(document.querySelectorAll(itemSelector)).filter((item) => !(item instanceof HTMLElement) || !item.hidden);
+        Array.from(document.querySelectorAll(itemSelector)).filter((item) => item instanceof HTMLElement && !item.hidden);
 
       const updateCounts = () => {
         const items = visibleItems();
@@ -362,10 +362,20 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
             return;
           }
           const visibleChildren = Array.from(category.querySelectorAll(itemSelector)).filter(
-            (item) => !(item instanceof HTMLElement) || !item.hidden,
+            (item) => item instanceof HTMLElement && !item.hidden,
           );
           category.hidden = visibleChildren.length === 0;
         });
+      };
+
+      const hideTask = (todoId) => {
+        if (!todoId) {
+          return;
+        }
+        const hiddenIds = readHiddenIds();
+        hiddenIds.add(todoId);
+        writeHiddenIds(hiddenIds);
+        applyHiddenIds();
       };
 
       const applyHiddenIds = () => {
@@ -376,30 +386,32 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
           }
           const todoId = item.dataset.todoId || "";
           item.hidden = hiddenIds.has(todoId);
+          item.style.display = item.hidden ? "none" : "";
         });
         updateCategoryVisibility();
         updateCounts();
       };
 
-      document.querySelectorAll("[data-todo-delete]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const todoId = button.getAttribute("data-todo-delete");
-          if (!todoId) {
-            return;
-          }
-          const hiddenIds = readHiddenIds();
-          hiddenIds.add(todoId);
-          writeHiddenIds(hiddenIds);
-          applyHiddenIds();
-        });
-      });
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
 
-      if (resetButton instanceof HTMLButtonElement) {
-        resetButton.addEventListener("click", () => {
+        const deleteButton = target.closest("[data-todo-delete]");
+        if (deleteButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          hideTask(deleteButton.getAttribute("data-todo-delete"));
+          return;
+        }
+
+        if (resetButton instanceof HTMLButtonElement && target === resetButton) {
+          event.preventDefault();
           writeHiddenIds(new Set());
           applyHiddenIds();
-        });
-      }
+        }
+      });
 
       applyHiddenIds();
     })();

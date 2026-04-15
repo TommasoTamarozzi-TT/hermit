@@ -745,6 +745,11 @@
     background: var(--color-surface);
   }
 
+  .todo-item[hidden],
+  .todo-category-card[hidden] {
+    display: none !important;
+  }
+
   .todo-item__content {
     @apply grid gap-2;
   }
