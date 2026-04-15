@@ -1,80 +1,249 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-type TodoPriority = "high" | "medium" | "low";
+type TodoPriority = "high" | "medium" | "low" | "needs-triage";
 
-interface TodoItem {
-  id: string;
+type TodoCategoryId =
+  | "business-development"
+  | "engineering"
+  | "projects-strategy"
+  | "marketing-web"
+  | "personal";
+
+interface TodoTaskInput {
   label: string;
   priority: TodoPriority;
+  category: TodoCategoryId;
+}
+
+interface TodoItem extends TodoTaskInput {
+  id: string;
 }
 
 interface TodoCategory {
-  id: string;
+  id: TodoCategoryId;
   title: string;
   description: string;
   items: TodoItem[];
 }
 
-const todoCategories: TodoCategory[] = [
-  {
-    id: "communication",
-    title: "Communication",
-    description: "External follow-up and outbound messages.",
-    items: [
-      {
-        id: "answer-dnv-about-testing-rope",
-        label: "Answer DNV about testing rope",
-        priority: "medium",
-      },
-      {
-        id: "send-email-to-arcelor",
-        label: "Send email to Arcelor",
-        priority: "high",
-      },
-    ],
+const categoryMeta: Record<TodoCategoryId, { title: string; description: string }> = {
+  "business-development": {
+    title: "Business Development",
+    description: "Customer follow-up, quotations, and external communication.",
   },
-  {
-    id: "engineering",
+  engineering: {
     title: "Engineering",
-    description: "Platform and technical enablement work.",
-    items: [
-      {
-        id: "allow-debug-production-code",
-        label: "Allow to debug production code",
-        priority: "high",
-      },
-    ],
+    description: "Technical work, analysis, and implementation tasks.",
+  },
+  "projects-strategy": {
+    title: "Projects & Strategy",
+    description: "Planning, positioning, coordination, and internal operational work.",
+  },
+  "marketing-web": {
+    title: "Marketing & Web",
+    description: "Website, reviews, posts, and public-facing updates.",
+  },
+  personal: {
+    title: "Personal",
+    description: "Personal follow-up items.",
+  },
+};
+
+const rawTasks: TodoTaskInput[] = [
+  {
+    label: "Allow to debug production code",
+    priority: "high",
+    category: "engineering",
   },
   {
-    id: "projects",
-    title: "Projects",
-    description: "Project preparation and proposal drafting.",
-    items: [
-      {
-        id: "write-project-about-sarens",
-        label: "Write project about Sarens",
-        priority: "high",
-      },
-    ],
+    label: "Write project about Sarens",
+    priority: "high",
+    category: "projects-strategy",
   },
   {
-    id: "labeling",
-    title: "Data & Labeling",
-    description: "Dataset preparation and review work.",
-    items: [
-      {
-        id: "select-more-images-to-label",
-        label: "Select more images to label",
-        priority: "medium",
-      },
-    ],
+    label: "Send email to Arcelor",
+    priority: "high",
+    category: "business-development",
+  },
+  {
+    label: "Implement position estimation",
+    priority: "high",
+    category: "engineering",
+  },
+  {
+    label: "Make Hermit workspace repo",
+    priority: "high",
+    category: "projects-strategy",
+  },
+  {
+    label: "Carlo bank transfer",
+    priority: "high",
+    category: "personal",
+  },
+  {
+    label: "Posts Teufelberger",
+    priority: "high",
+    category: "marketing-web",
+  },
+  {
+    label: "Post Zermatt",
+    priority: "high",
+    category: "marketing-web",
+  },
+  {
+    label: "Launch website",
+    priority: "high",
+    category: "marketing-web",
+  },
+  {
+    label: "Check Deme and send quotation",
+    priority: "high",
+    category: "business-development",
+  },
+  {
+    label: "Send item to Arcelor",
+    priority: "high",
+    category: "business-development",
+  },
+  {
+    label: "Board meeting",
+    priority: "high",
+    category: "projects-strategy",
+  },
+  {
+    label: "Finalize Wireco trip and positioning",
+    priority: "high",
+    category: "projects-strategy",
+  },
+  {
+    label: "Answer DNV about testing rope",
+    priority: "medium",
+    category: "business-development",
+  },
+  {
+    label: "Select more images to label",
+    priority: "medium",
+    category: "engineering",
+  },
+  {
+    label: "Check diameters and MRT start",
+    priority: "medium",
+    category: "engineering",
+  },
+  {
+    label: "Robustification with more cameras",
+    priority: "medium",
+    category: "engineering",
+  },
+  {
+    label: "Send photo about Carlo",
+    priority: "medium",
+    category: "personal",
+  },
+  {
+    label: "Check Saipem",
+    priority: "medium",
+    category: "business-development",
+  },
+  {
+    label: "Check Erwin",
+    priority: "medium",
+    category: "business-development",
+  },
+  {
+    label: "Answer Bekaert",
+    priority: "medium",
+    category: "business-development",
+  },
+  {
+    label: "Look at motion magnification algo",
+    priority: "low",
+    category: "engineering",
+  },
+  {
+    label: "Email Liebherr",
+    priority: "low",
+    category: "business-development",
+  },
+  {
+    label: "Clean code for analysis of one or multiple images",
+    priority: "needs-triage",
+    category: "engineering",
+  },
+  {
+    label: "Analyze data Vincent",
+    priority: "needs-triage",
+    category: "engineering",
+  },
+  {
+    label: "Aga review web",
+    priority: "needs-triage",
+    category: "marketing-web",
   },
 ];
 
-const todoItems = todoCategories.flatMap((category) => category.items);
-const highPriorityCount = todoItems.filter((item) => item.priority === "high").length;
-const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium").length;
+const priorityRank: Record<TodoPriority, number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+  "needs-triage": 3,
+};
+
+const normalizeTaskLabel = (label: string) => label.toLowerCase().replace(/\s+/g, " ").trim();
+const toTaskId = (label: string) =>
+  normalizeTaskLabel(label)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const uniqueTasks = Array.from(
+  new Map(rawTasks.map((task) => [normalizeTaskLabel(task.label), task])).values(),
+);
+
+const sortedTasks: TodoItem[] = uniqueTasks
+  .map((task) => ({
+    ...task,
+    id: toTaskId(task.label),
+  }))
+  .sort((a, b) => {
+    const priorityDiff = priorityRank[a.priority] - priorityRank[b.priority];
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+    const categoryDiff = categoryMeta[a.category].title.localeCompare(categoryMeta[b.category].title);
+    if (categoryDiff !== 0) {
+      return categoryDiff;
+    }
+    return a.label.localeCompare(b.label);
+  });
+
+const groupedCategories = new Map<TodoCategoryId, TodoItem[]>();
+for (const task of sortedTasks) {
+  const current = groupedCategories.get(task.category) ?? [];
+  current.push(task);
+  groupedCategories.set(task.category, current);
+}
+
+const todoCategories: TodoCategory[] = Array.from(groupedCategories.entries())
+  .map(([id, items]) => ({
+    id,
+    title: categoryMeta[id].title,
+    description: categoryMeta[id].description,
+    items,
+  }))
+  .sort((a, b) => {
+    const aTopPriority = Math.min(...a.items.map((item) => priorityRank[item.priority]));
+    const bTopPriority = Math.min(...b.items.map((item) => priorityRank[item.priority]));
+    if (aTopPriority !== bTopPriority) {
+      return aTopPriority - bTopPriority;
+    }
+    return a.title.localeCompare(b.title);
+  });
+
+const highPriorityCount = sortedTasks.filter((item) => item.priority === "high").length;
+const mediumPriorityCount = sortedTasks.filter((item) => item.priority === "medium").length;
+const lowPriorityCount = sortedTasks.filter((item) => item.priority === "low").length;
+const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage").length;
 ---
 <BaseLayout title="Raidyn Virtual Assistent - Explorer">
   <section class="card foldable-card home-todo-card">
@@ -82,18 +251,20 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
       <summary class="foldable-summary">
         <div>
           <div class="foldable-title">To-do list</div>
-          <p class="foldable-meta">Grouped by category, with the urgency you gave.</p>
+          <p class="foldable-meta">Grouped by category and ordered by priority.</p>
         </div>
         <div class="todo-summary-badges">
           <span class="priority-pill priority-pill--high" data-summary-high>{highPriorityCount} high</span>
           <span class="priority-pill priority-pill--medium" data-summary-medium>{mediumPriorityCount} medium</span>
-          <span class="priority-pill priority-pill--neutral" data-summary-total>{todoItems.length} total</span>
+          <span class="priority-pill priority-pill--low" data-summary-low>{lowPriorityCount} low</span>
+          <span class="priority-pill priority-pill--needs-triage" data-summary-triage>{triageCount} needs priority</span>
+          <span class="priority-pill priority-pill--neutral" data-summary-total>{sortedTasks.length} total</span>
         </div>
       </summary>
 
       <div class="foldable-body todo-body">
         <div class="todo-toolbar">
-          <p class="meta">Each category can be folded. Use <strong>Delete</strong> to hide completed items from this browser. Use <strong>Reset list</strong> to restore them.</p>
+          <p class="meta">Each category can be folded. <strong>Delete</strong> hides a task in this browser. <strong>Reset list</strong> restores hidden items. Tasks marked <strong>Needs priority</strong> were added without a priority in your message.</p>
           <button type="button" class="todo-reset-button" data-todo-reset>Reset list</button>
         </div>
 
@@ -113,7 +284,9 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
                   {category.items.map((item) => (
                     <li class="todo-item" data-todo-item data-todo-id={item.id}>
                       <div class="todo-item__content">
-                        <span class={`priority-pill priority-pill--${item.priority}`}>{item.priority} priority</span>
+                        <span class={`priority-pill priority-pill--${item.priority}`}>
+                          {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
+                        </span>
                         <p class="todo-item__label">{item.label}</p>
                       </div>
                       <button type="button" class="todo-delete-button" data-todo-delete={item.id} aria-label={`Delete ${item.label}`}>
@@ -141,6 +314,8 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
       const resetButton = document.querySelector("[data-todo-reset]");
       const highBadge = document.querySelector("[data-summary-high]");
       const mediumBadge = document.querySelector("[data-summary-medium]");
+      const lowBadge = document.querySelector("[data-summary-low]");
+      const triageBadge = document.querySelector("[data-summary-triage]");
       const totalBadge = document.querySelector("[data-summary-total]");
 
       const readHiddenIds = () => {
@@ -167,9 +342,13 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
         const items = visibleItems();
         const highCount = items.filter((item) => item.querySelector(".priority-pill--high")).length;
         const mediumCount = items.filter((item) => item.querySelector(".priority-pill--medium")).length;
+        const lowCount = items.filter((item) => item.querySelector(".priority-pill--low")).length;
+        const triageCount = items.filter((item) => item.querySelector(".priority-pill--needs-triage")).length;
 
         if (highBadge) highBadge.textContent = `${highCount} high`;
         if (mediumBadge) mediumBadge.textContent = `${mediumCount} medium`;
+        if (lowBadge) lowBadge.textContent = `${lowCount} low`;
+        if (triageBadge) triageBadge.textContent = `${triageCount} needs priority`;
         if (totalBadge) totalBadge.textContent = `${items.length} total`;
 
         if (emptyState instanceof HTMLElement) {
