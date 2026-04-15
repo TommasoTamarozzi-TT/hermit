@@ -8,6 +8,7 @@ import { renderMarkdown } from "../lib/renderers.js";
 import { getWorkspaceRoot } from "../lib/workspace.js";
 
 const root = getWorkspaceRoot();
+const timeZone = "Europe/Brussels";
 const digestWorkItemPath = path.join(root, "entities", "work-items", "wi-set-up-daily-email-and-calendar-digest");
 const slackWorkItemPath = path.join(root, "entities", "work-items", "wi-set-up-slack-unread-summary-table");
 
@@ -22,6 +23,10 @@ async function readMarkdownFile(filePath: string): Promise<string | undefined> {
     throw error;
   }
 }
+
+const now = new Date();
+const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const todayTotals = await getUsageForPeriod(root, todayStart, now);
 
 const [unreadMarkdown, calendarMarkdown, slackMarkdown, digestMarkdown] = await Promise.all([
   readMarkdownFile(path.join(digestWorkItemPath, "unread-email-explorer.md")),
@@ -45,6 +50,21 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
     <h1 class="page-title">Tables</h1>
     <p class="meta">Live operational summaries for unread email, forward-looking calendar days, Slack activity, and the latest digest snapshot.</p>
   </div>
+
+  <section class="file-section card">
+    <h2>OpenAI usage today</h2>
+    <div class="usage-grid">
+      <div class="usage-item">
+        <span class="label">Estimated cost</span>
+        <div class="value">{formatCurrency(todayTotals.cost)}</div>
+      </div>
+      <div class="usage-item">
+        <span class="label">Used tokens</span>
+        <div class="value">{formatInteger(todayTotals.tokens)}</div>
+      </div>
+    </div>
+    <p class="meta usage-meta">Today so far in {timeZone}. Counted from {formatInteger(todayTotals.entries)} recorded OpenAI usage entries across Hermit and role-agent sessions.</p>
+  </section>
 
   <details class="file-section card foldable-card" open>
     <summary class="foldable-summary">
@@ -103,23 +123,36 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
   </details>
 </BaseLayout>
 
-as been generated yet.</p></div>
-      )}
-    </div>
-  </details>
-</BaseLayout>
+<style>
+  .usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 0;
+  }
 
-e-summary">
-      <span class="foldable-title">Latest digest email</span>
-      <span class="foldable-meta">Open the full generated digest snapshot</span>
-    </summary>
-    <div class="foldable-body foldable-body--flush">
-      {digestHtml ? (
-        <div class="markdown-body" set:html={digestHtml} />
-      ) : (
-        <div class="markdown-body"><p>No digest snapshot has been generated yet.</p></div>
-      )}
-    </div>
-  </details>
-</BaseLayout>
+  .usage-item {
+    padding: 0.85rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
+  .usage-item .label {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-bottom: 0.35rem;
+  }
+
+  .usage-item .value {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .usage-meta {
+    padding: 0 1.5rem 1.25rem;
+  }
+</style>
