@@ -1,7 +1,5 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { renderExplorerHome } from "../lib/renderers.js";
-import { countEntitiesByDefinition, getWorkspaceRoot, loadEntityDefs } from "../lib/workspace.js";
 
 type TodoPriority = "high" | "medium" | "low";
 
@@ -17,17 +15,6 @@ interface TodoCategory {
   description: string;
   items: TodoItem[];
 }
-
-const root = getWorkspaceRoot();
-const { entities: entityDefs, explorer } = await loadEntityDefs(root);
-const entityTypes = await Promise.all(
-  entityDefs.map(async (entityDef) => ({
-    entityDef,
-    count: await countEntitiesByDefinition(root, entityDef),
-  })),
-);
-const hasEntities = entityTypes.some(({ count }) => count > 0);
-const customHome = await renderExplorerHome({ root, explorer });
 
 const todoCategories: TodoCategory[] = [
   {
@@ -89,60 +76,7 @@ const todoItems = todoCategories.flatMap((category) => category.items);
 const highPriorityCount = todoItems.filter((item) => item.priority === "high").length;
 const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium").length;
 ---
-<BaseLayout title={customHome?.title ?? "Raidyn Virtual Assistent - Explorer"}>
-  {customHome ? (
-    <div set:html={customHome.html} />
-  ) : (
-    <>
-      <div class="page-intro">
-        <h1>Raidyn Virtual Assistent - Explorer</h1>
-        <p class="meta">Browse global entities, role workspaces, and shared Hermit docs.</p>
-      </div>
-
-      {hasEntities && (
-        <>
-          <h2 class="section-title">Entities</h2>
-          <div class="entity-type-list mb-8">
-            <a href="/entities">
-              <strong>All Entities</strong>
-              <span class="meta"> — browse the workspace entity catalog by type</span>
-            </a>
-          </div>
-        </>
-      )}
-
-      <>
-        <h2 class="section-title">Secretariat</h2>
-        <div class="entity-type-list mb-8">
-          <a href="/secretariat">
-            <strong>Secretariat</strong>
-            <span class="meta"> — open operational summaries and the travel organizer</span>
-          </a>
-        </div>
-      </>
-
-      <>
-        <h2 class="section-title">Procurement</h2>
-        <div class="entity-type-list mb-8">
-          <a href="/procurement">
-            <strong>Procurement</strong>
-            <span class="meta"> — live supplier-mapping progress and the in-progress procurement view</span>
-          </a>
-        </div>
-      </>
-
-      <>
-        <h2 class="section-title">Operational Business</h2>
-        <div class="entity-type-list mb-8">
-          <a href="/operational-business">
-            <strong>Operational Business</strong>
-            <span class="meta"> — sales pipeline and installations views</span>
-          </a>
-        </div>
-      </>
-    </>
-  )}
-
+<BaseLayout title="Raidyn Virtual Assistent - Explorer">
   <section class="card foldable-card home-todo-card">
     <details open data-home-todo>
       <summary class="foldable-summary">
@@ -151,43 +85,45 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
           <p class="foldable-meta">Grouped by category, with the urgency you gave.</p>
         </div>
         <div class="todo-summary-badges">
-          <span class="priority-pill priority-pill--high">{highPriorityCount} high</span>
-          <span class="priority-pill priority-pill--medium">{mediumPriorityCount} medium</span>
-          <span class="priority-pill priority-pill--neutral">{todoItems.length} total</span>
+          <span class="priority-pill priority-pill--high" data-summary-high>{highPriorityCount} high</span>
+          <span class="priority-pill priority-pill--medium" data-summary-medium>{mediumPriorityCount} medium</span>
+          <span class="priority-pill priority-pill--neutral" data-summary-total>{todoItems.length} total</span>
         </div>
       </summary>
 
       <div class="foldable-body todo-body">
         <div class="todo-toolbar">
-          <p class="meta">Use <strong>Delete</strong> to hide completed items from this browser. Use <strong>Reset list</strong> to restore them.</p>
+          <p class="meta">Each category can be folded. Use <strong>Delete</strong> to hide completed items from this browser. Use <strong>Reset list</strong> to restore them.</p>
           <button type="button" class="todo-reset-button" data-todo-reset>Reset list</button>
         </div>
 
         <div class="todo-category-grid" data-todo-category-grid>
           {todoCategories.map((category) => (
-            <section class="todo-category-card" data-category-id={category.id}>
-              <div class="todo-category-card__header">
+            <details class="todo-category-card foldable-card" data-category-id={category.id} open>
+              <summary class="foldable-summary todo-category-summary">
                 <div>
                   <h3>{category.title}</h3>
                   <p class="meta">{category.description}</p>
                 </div>
                 <span class="todo-category-count">{category.items.length} item{category.items.length === 1 ? "" : "s"}</span>
-              </div>
+              </summary>
 
-              <ul class="todo-item-list">
-                {category.items.map((item) => (
-                  <li class="todo-item" data-todo-item data-todo-id={item.id}>
-                    <div class="todo-item__content">
-                      <span class={`priority-pill priority-pill--${item.priority}`}>{item.priority} priority</span>
-                      <p class="todo-item__label">{item.label}</p>
-                    </div>
-                    <button type="button" class="todo-delete-button" data-todo-delete={item.id} aria-label={`Delete ${item.label}`}>
-                      Delete
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+              <div class="foldable-body todo-category-body">
+                <ul class="todo-item-list">
+                  {category.items.map((item) => (
+                    <li class="todo-item" data-todo-item data-todo-id={item.id}>
+                      <div class="todo-item__content">
+                        <span class={`priority-pill priority-pill--${item.priority}`}>{item.priority} priority</span>
+                        <p class="todo-item__label">{item.label}</p>
+                      </div>
+                      <button type="button" class="todo-delete-button" data-todo-delete={item.id} aria-label={`Delete ${item.label}`}>
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </details>
           ))}
         </div>
 
@@ -202,8 +138,10 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
       const itemSelector = "[data-todo-item]";
       const categorySelector = "[data-category-id]";
       const emptyState = document.querySelector("[data-todo-empty]");
-      const summaryRoot = document.querySelector("[data-home-todo]");
       const resetButton = document.querySelector("[data-todo-reset]");
+      const highBadge = document.querySelector("[data-summary-high]");
+      const mediumBadge = document.querySelector("[data-summary-medium]");
+      const totalBadge = document.querySelector("[data-summary-total]");
 
       const readHiddenIds = () => {
         try {
@@ -222,22 +160,20 @@ const mediumPriorityCount = todoItems.filter((item) => item.priority === "medium
         }
       };
 
-      const updateCounts = () => {
-        const items = Array.from(document.querySelectorAll(itemSelector));
-        const visibleItems = items.filter((item) => !(item instanceof HTMLElement) || !item.hidden);
-        const highCount = visibleItems.filter((item) => item.querySelector(".priority-pill--high")).length;
-        const mediumCount = visibleItems.filter((item) => item.querySelector(".priority-pill--medium")).length;
+      const visibleItems = () =>
+        Array.from(document.querySelectorAll(itemSelector)).filter((item) => !(item instanceof HTMLElement) || !item.hidden);
 
-        const highBadge = summaryRoot?.querySelector(".priority-pill--high");
-        const mediumBadge = summaryRoot?.querySelector(".priority-pill--medium");
-        const totalBadge = summaryRoot?.querySelector(".priority-pill--neutral");
+      const updateCounts = () => {
+        const items = visibleItems();
+        const highCount = items.filter((item) => item.querySelector(".priority-pill--high")).length;
+        const mediumCount = items.filter((item) => item.querySelector(".priority-pill--medium")).length;
 
         if (highBadge) highBadge.textContent = `${highCount} high`;
         if (mediumBadge) mediumBadge.textContent = `${mediumCount} medium`;
-        if (totalBadge) totalBadge.textContent = `${visibleItems.length} total`;
+        if (totalBadge) totalBadge.textContent = `${items.length} total`;
 
         if (emptyState instanceof HTMLElement) {
-          emptyState.hidden = visibleItems.length > 0;
+          emptyState.hidden = items.length > 0;
         }
       };
 
