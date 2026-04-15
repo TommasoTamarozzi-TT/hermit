@@ -3,6 +3,7 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { formatCurrency, formatInteger, getUsageForPeriod } from "../lib/openai-usage.js";
 import { renderMarkdown } from "../lib/renderers.js";
 import { getWorkspaceRoot } from "../lib/workspace.js";
 
@@ -89,6 +90,26 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
 
   <details class="file-section card foldable-card">
     <summary class="foldable-summary">
+      <span class="foldable-title">Latest digest email</span>
+      <span class="foldable-meta">Open the full generated digest snapshot</span>
+    </summary>
+    <div class="foldable-body foldable-body--flush">
+      {digestHtml ? (
+        <div class="markdown-body" set:html={digestHtml} />
+      ) : (
+        <div class="markdown-body"><p>No digest snapshot has been generated yet.</p></div>
+      )}
+    </div>
+  </details>
+</BaseLayout>
+
+as been generated yet.</p></div>
+      )}
+    </div>
+  </details>
+</BaseLayout>
+
+e-summary">
       <span class="foldable-title">Latest digest email</span>
       <span class="foldable-meta">Open the full generated digest snapshot</span>
     </summary>
