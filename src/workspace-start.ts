@@ -573,9 +573,15 @@ function spawnManagedProcess(options: {
   });
 }
 
+export function hasInteractiveWorkspaceTerminal(
+  stdin: Pick<NodeJS.ReadStream, "isTTY" | "setRawMode"> = process.stdin,
+): boolean {
+  return Boolean(stdin.isTTY && typeof stdin.setRawMode === "function");
+}
+
 export async function runWorkspaceStartLoop(options: WorkspaceStartLoopOptions): Promise<void> {
-  if (!(process.stdin.isTTY && process.stdout.isTTY)) {
-    throw new Error("The combined `start` command requires an interactive terminal.");
+  if (!hasInteractiveWorkspaceTerminal()) {
+    throw new Error("The combined `start` command requires an interactive stdin terminal.");
   }
 
   const telegramStatus = resolveTelegramBridgeStatus();

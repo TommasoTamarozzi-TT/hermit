@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractExplorerUrl,
   formatHeartbeatHeaderDetail,
+  hasInteractiveWorkspaceTerminal,
   renderAnsiTextBlock,
   resolveWorkspaceStartLayout,
 } from "../src/workspace-start.js";
@@ -52,6 +53,26 @@ describe("renderAnsiTextBlock", () => {
 
   it("keeps completed heartbeat log lines after spinner redraws", () => {
     expect(renderAnsiTextBlock("| Thinking\r\x1b[2K[done]\n", 80)).toEqual(["[done]", ""]);
+  });
+});
+
+describe("hasInteractiveWorkspaceTerminal", () => {
+  it("accepts interactive stdin even when stdout tty state is unknown", () => {
+    expect(
+      hasInteractiveWorkspaceTerminal({
+        isTTY: true,
+        setRawMode: () => undefined,
+      } as Pick<NodeJS.ReadStream, "isTTY" | "setRawMode">),
+    ).toBe(true);
+  });
+
+  it("rejects non-tty stdin", () => {
+    expect(
+      hasInteractiveWorkspaceTerminal({
+        isTTY: false,
+        setRawMode: () => undefined,
+      } as Pick<NodeJS.ReadStream, "isTTY" | "setRawMode">),
+    ).toBe(false);
   });
 });
 
