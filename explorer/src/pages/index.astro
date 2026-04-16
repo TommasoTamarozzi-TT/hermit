@@ -56,6 +56,14 @@ const secretaryRecordPath = "/home/rva/repos/hermit/workspace/agents/secretary/a
 function inferCategory(label: string): TodoCategoryId {
   const normalized = label.toLowerCase();
 
+  if (/(raise-of-capital|raise of capital|capital increase)/.test(normalized)) {
+    return "projects-strategy";
+  }
+
+  if (/(erika)/.test(normalized)) {
+    return "personal";
+  }
+
   if (/(post|carosello|website|review)/.test(normalized)) {
     return "marketing-web";
   }
@@ -64,7 +72,7 @@ function inferCategory(label: string): TodoCategoryId {
     return "personal";
   }
 
-  if (/(email|answer|call|follow up|jordi|bart|elisabeth|erika|arcelor|bekaert|saipem|deme|dnv|liebherr)/.test(normalized)) {
+  if (/(email|answer|call|follow up|jordi|bart|elisabeth|arcelor|bekaert|saipem|deme|dnv|liebherr)/.test(normalized)) {
     return "business-development";
   }
 
