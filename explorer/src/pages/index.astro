@@ -1,4 +1,5 @@
 ---
+import fs from "node:fs/promises";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 type TodoPriority = "high" | "medium" | "low" | "needs-triage";
@@ -49,6 +50,86 @@ const categoryMeta: Record<TodoCategoryId, { title: string; description: string 
     description: "Personal follow-up items.",
   },
 };
+
+const secretaryRecordPath = "/home/rva/repos/hermit/workspace/agents/secretary/agent/record.md";
+
+function inferCategory(label: string): TodoCategoryId {
+  const normalized = label.toLowerCase();
+
+  if (/(post|carosello|website|review)/.test(normalized)) {
+    return "marketing-web";
+  }
+
+  if (/(car|motorbike|printer|filippo)/.test(normalized)) {
+    return "personal";
+  }
+
+  if (/(email|answer|call|follow up|jordi|bart|elisabeth|erika|arcelor|bekaert|saipem|deme|dnv|liebherr)/.test(normalized)) {
+    return "business-development";
+  }
+
+  return "projects-strategy";
+}
+
+function cleanTaskLabel(label: string): string {
+  return label.trim().replace(/[.]$/, "");
+}
+
+async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
+  const raw = await fs.readFile(secretaryRecordPath, "utf8").catch(() => "");
+  if (!raw) {
+    return [];
+  }
+
+  const nextActionsMatch = raw.match(/## Next Actions\s+([\s\S]*?)\n## /);
+  const nextActionsBlock = nextActionsMatch?.[1] ?? "";
+  const tasks: TodoTaskInput[] = [];
+
+  for (const line of nextActionsBlock.split("\n")) {
+    const bullet = line.trim();
+    if (!bullet.startsWith("- ")) {
+      continue;
+    }
+
+    const content = bullet.slice(2).trim();
+
+    let priority: TodoPriority | null = null;
+    let label = "";
+
+    const highMatch = content.match(/^High priority:\s*(.+)$/i);
+    const mediumMatch = content.match(/^Medium priority:\s*(.+)$/i);
+    const lowMatch = content.match(/^Low priority:\s*(.+)$/i);
+    const triageMatch = content.match(/^Priority not yet set:\s*(.+)$/i);
+
+    if (highMatch) {
+      priority = "high";
+      label = cleanTaskLabel(highMatch[1]);
+    } else if (mediumMatch) {
+      priority = "medium";
+      label = cleanTaskLabel(mediumMatch[1]);
+    } else if (lowMatch) {
+      priority = "low";
+      label = cleanTaskLabel(lowMatch[1]);
+    } else if (triageMatch) {
+      priority = "needs-triage";
+      label = cleanTaskLabel(triageMatch[1]);
+    }
+
+    if (!priority || !label) {
+      continue;
+    }
+
+    tasks.push({
+      label,
+      priority,
+      category: inferCategory(label),
+    });
+  }
+
+  return tasks;
+}
+
+const dynamicTasks = await loadSecretaryTodoTasks();
 
 const rawTasks: TodoTaskInput[] = [
   {
@@ -181,6 +262,7 @@ const rawTasks: TodoTaskInput[] = [
     priority: "low",
     category: "marketing-web",
   },
+  ...dynamicTasks,
 ];
 
 const priorityRank: Record<TodoPriority, number> = {
