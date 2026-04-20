@@ -337,7 +337,7 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
 ---
 <BaseLayout title="Raidyn Virtual Assistent - Explorer">
   <section class="card foldable-card home-todo-card">
-    <details open data-home-todo>
+    <details data-home-todo>
       <summary class="foldable-summary">
         <div>
           <div class="foldable-title">To-do list</div>
@@ -360,7 +360,7 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
 
         <div class="todo-category-grid" data-todo-category-grid>
           {todoCategories.map((category) => (
-            <details class="todo-category-card foldable-card" data-category-id={category.id} open>
+            <details class="todo-category-card foldable-card" data-category-id={category.id}>
               <summary class="foldable-summary todo-category-summary">
                 <div>
                   <h3>{category.title}</h3>
