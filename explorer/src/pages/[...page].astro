@@ -21,7 +21,7 @@ if (!renderedPage) {
 }
 ---
 <BaseLayout title={renderedPage.title ?? pageKey}>
-  <div data-explorer-page={pageKey} set:html={renderedPage.html} />
+  <div data-explorer-page={pageKey} data-render-rev="2026-04-24-email-templates" set:html={renderedPage.html} />
 
   {pageKey === "market-analysis" && (
     <script is:inline>
