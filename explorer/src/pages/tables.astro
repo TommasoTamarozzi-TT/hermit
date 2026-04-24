@@ -28,14 +28,16 @@ const now = new Date();
 const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 const todayTotals = await getUsageForPeriod(root, todayStart, now);
 
-const [unreadMarkdown, calendarMarkdown, slackMarkdown, digestMarkdown] = await Promise.all([
+const [todayMarkdown, unreadMarkdown, calendarMarkdown, slackMarkdown, digestMarkdown] = await Promise.all([
+  readMarkdownFile(path.join(digestWorkItemPath, "today-email-explorer.md")),
   readMarkdownFile(path.join(digestWorkItemPath, "unread-email-explorer.md")),
   readMarkdownFile(path.join(digestWorkItemPath, "calendar-action-days.md")),
   readMarkdownFile(path.join(slackWorkItemPath, "latest-slack-summary.md")),
   readMarkdownFile(path.join(digestWorkItemPath, "latest-email-digest.md")),
 ]);
 
-const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
+const [todayHtml, unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
+  todayMarkdown ? renderMarkdown(todayMarkdown) : undefined,
   unreadMarkdown ? renderMarkdown(unreadMarkdown) : undefined,
   calendarMarkdown ? renderMarkdown(calendarMarkdown) : undefined,
   slackMarkdown ? renderMarkdown(slackMarkdown) : undefined,
@@ -48,7 +50,7 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
   </div>
   <div class="page-intro">
     <h1 class="page-title">Tables</h1>
-    <p class="meta">Live operational summaries for unread email, forward-looking calendar days, Slack activity, and the latest digest snapshot.</p>
+    <p class="meta">Live operational summaries for today’s emails, unread email, forward-looking calendar days, Slack activity, and the latest digest snapshot.</p>
   </div>
 
   <section class="file-section card">
@@ -67,6 +69,20 @@ const [unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promise.all([
   </section>
 
   <details class="file-section card foldable-card" open>
+    <summary class="foldable-summary">
+      <span class="foldable-title">Today’s emails</span>
+      <span class="foldable-meta">Open the latest saved table for all of today’s emails</span>
+    </summary>
+    <div class="foldable-body foldable-body--flush">
+      {todayHtml ? (
+        <div class="markdown-body" set:html={todayHtml} />
+      ) : (
+        <div class="markdown-body"><p>No today email snapshot has been generated yet.</p></div>
+      )}
+    </div>
+  </details>
+
+  <details class="file-section card foldable-card">
     <summary class="foldable-summary">
       <span class="foldable-title">Unread email view</span>
       <span class="foldable-meta">Open the latest unread email snapshot</span>
