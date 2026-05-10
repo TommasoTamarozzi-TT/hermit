@@ -362,14 +362,17 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
 ---
 <BaseLayout title="Raidyn Virtual Assistent - Explorer">
   {prioritiesHtml && (
-    <section class="card">
-      <div class="page-intro" style="margin-bottom: 0.75rem;">
-        <h2 style="margin-bottom: 0.25rem;">Raidyn cross-role priorities</h2>
+    <details class="card foldable-card">
+      <summary class="foldable-summary">
+        <span class="foldable-title">Raidyn cross-role priorities</span>
+        <span class="foldable-meta">5 active priorities</span>
+      </summary>
+      <div class="foldable-body">
         <p class="meta">Canonical company-level priority stack shared across the active Raidyn roles.</p>
+        <div class="markdown-body" set:html={prioritiesHtml} />
+        <p class="meta"><a href={companyPageHref}>Open the Raidyn company record</a></p>
       </div>
-      <div class="markdown-body" set:html={prioritiesHtml} />
-      <p class="meta"><a href={companyPageHref}>Open the Raidyn company record</a></p>
-    </section>
+    </details>
   )}
 
   <section class="card foldable-card home-todo-card">
