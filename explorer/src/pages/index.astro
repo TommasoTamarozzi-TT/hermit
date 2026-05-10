@@ -1,6 +1,7 @@
 ---
 import fs from "node:fs/promises";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { renderMarkdown } from "../lib/renderers.js";
 
 type TodoPriority = "high" | "medium" | "low" | "needs-triage";
 
@@ -52,6 +53,8 @@ const categoryMeta: Record<TodoCategoryId, { title: string; description: string 
 };
 
 const secretaryRecordPath = "/home/rva/repos/hermit/workspace/agents/secretary/agent/record.md";
+const companyRecordPath = "/home/rva/repos/hermit/workspace/entities/companies/co-raidyn/record.md";
+const companyPageHref = "/entities/company/co-raidyn";
 
 function inferCategory(label: string): TodoCategoryId {
   const normalized = label.toLowerCase();
@@ -81,6 +84,27 @@ function inferCategory(label: string): TodoCategoryId {
 
 function cleanTaskLabel(label: string): string {
   return label.trim().replace(/[.]$/, "");
+}
+
+
+function extractMarkdownSection(markdown: string, heading: string): string {
+  const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = markdown.match(new RegExp(`## ${escapedHeading}\\n([\\s\\S]*?)(?:\\n## |$)`));
+  return match?.[1]?.trim() ?? "";
+}
+
+async function loadRaidynCrossRolePrioritiesHtml(): Promise<string> {
+  const raw = await fs.readFile(companyRecordPath, "utf8").catch(() => "");
+  if (!raw) {
+    return "";
+  }
+
+  const sectionMarkdown = extractMarkdownSection(raw, "Raidyn Cross-Role Priorities");
+  if (!sectionMarkdown) {
+    return "";
+  }
+
+  return renderMarkdown(sectionMarkdown);
 }
 
 async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
@@ -137,6 +161,7 @@ async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
   return tasks;
 }
 
+const prioritiesHtml = await loadRaidynCrossRolePrioritiesHtml();
 const dynamicTasks = await loadSecretaryTodoTasks();
 
 const rawTasks: TodoTaskInput[] = [
@@ -336,6 +361,17 @@ const lowPriorityCount = sortedTasks.filter((item) => item.priority === "low").l
 const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage").length;
 ---
 <BaseLayout title="Raidyn Virtual Assistent - Explorer">
+  {prioritiesHtml && (
+    <section class="card">
+      <div class="page-intro" style="margin-bottom: 0.75rem;">
+        <h2 style="margin-bottom: 0.25rem;">Raidyn cross-role priorities</h2>
+        <p class="meta">Canonical company-level priority stack shared across the active Raidyn roles.</p>
+      </div>
+      <div class="markdown-body" set:html={prioritiesHtml} />
+      <p class="meta"><a href={companyPageHref}>Open the Raidyn company record</a></p>
+    </section>
+  )}
+
   <section class="card foldable-card home-todo-card">
     <details data-home-todo>
       <summary class="foldable-summary">
