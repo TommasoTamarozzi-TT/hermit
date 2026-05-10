@@ -14,6 +14,7 @@ export interface ExplorerRoleSummary {
 export interface OrgRoleSummary extends ExplorerRoleSummary {
   href: string;
   conversationHref: string;
+  oneOnOneHref: string;
 }
 
 export const raidynChiefExecutive = {
@@ -48,6 +49,7 @@ function withHref(role: ExplorerRoleSummary): OrgRoleSummary {
     ...role,
     href: `/agents/${role.id}`,
     conversationHref: `/agents/${role.id}/conversation`,
+    oneOnOneHref: `/agents/${role.id}/one-on-one`,
   };
 }
 
