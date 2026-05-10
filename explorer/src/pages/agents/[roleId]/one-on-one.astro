@@ -1,0 +1,62 @@
+---
+import path from "node:path";
+import { promises as fs } from "node:fs";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { readMarkdownFiles } from "../../../lib/entity-content.js";
+import { renderDefaultFileSection } from "../../../lib/renderers.js";
+import { getWorkspaceRoot, loadRole } from "../../../lib/workspace.js";
+
+const { roleId } = Astro.params;
+if (!roleId) return Astro.redirect("/");
+
+const root = getWorkspaceRoot();
+const role = await loadRole(root, roleId);
+
+const agentDir = path.join(role.roleDir, "agent");
+const relativeLogPath = `agents/${role.id}/agent/one-on-one.md`;
+const logPath = path.join(agentDir, "one-on-one.md");
+
+let sections: string[] = [];
+let hasLog = false;
+
+try {
+  await fs.access(logPath);
+  hasLog = true;
+  sections = await Promise.all(
+    (await readMarkdownFiles(agentDir, ["one-on-one.md"])).map((file) => renderDefaultFileSection(file)),
+  );
+} catch {
+  hasLog = false;
+}
+---
+<BaseLayout title={`${role.name} 1 on 1`} roleId={role.id} roleName={role.name}>
+  <div class="breadcrumb">
+    <a href="/">Raidyn Virtual Assistent - Explorer</a> →
+    <a href="/agents">Orgchart</a> →
+    <a href={`/agents/${role.id}`}>{role.name}</a> →
+    1 on 1
+  </div>
+
+  <div class="page-intro">
+    <h1>{role.name} · 1 on 1</h1>
+    <p class="meta">Durable review log between Head of Operations and this agent.</p>
+    <p class="meta">Saved at <code>{relativeLogPath}</code></p>
+  </div>
+
+  <div class="page-actions">
+    <a class="action-button" href={`/agents/${role.id}`}>Agent definition</a>
+    <a class="action-button action-button--secondary" href={`/agents/${role.id}/conversation`}>Last conversation</a>
+  </div>
+
+  {hasLog ? (
+    sections.map((section) => <div set:html={section} />)
+  ) : (
+    <section class="card file-section">
+      <h2>No 1 on 1 log yet</h2>
+      <div class="markdown-body">
+        <p>This agent does not have a saved 1 on 1 note yet.</p>
+        <p>Create <code>{relativeLogPath}</code> to start logging summaries and action points.</p>
+      </div>
+    </section>
+  )}
+</BaseLayout>

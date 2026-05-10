@@ -262,6 +262,10 @@ async function ensureAgentFiles(
       relativePath: "inbox.md",
       template: "templates/agent/inbox.md",
     },
+    {
+      relativePath: "one-on-one.md",
+      template: "templates/agent/one-on-one.md",
+    },
   ] as const;
 
   await fs.mkdir(agentRoot, { recursive: true });

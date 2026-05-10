@@ -29,6 +29,7 @@ const sections = await Promise.all(
 
   <div class="page-actions">
     <a class="action-button" href={`/agents/${role.id}/conversation`}>Last conversation</a>
+    <a class="action-button action-button--secondary" href={`/agents/${role.id}/one-on-one`}>1 on 1</a>
   </div>
 
   {sections.map((section) => (

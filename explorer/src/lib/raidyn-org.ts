@@ -76,6 +76,7 @@ export function getVirtualAgentsData(roles: ExplorerRoleSummary[]): {
           description: "Coordinates the virtual-agent team and operational follow-through.",
           href: "/agents/head-of-operations",
           conversationHref: "/agents/head-of-operations/conversation",
+          oneOnOneHref: "/agents/head-of-operations/one-on-one",
         },
     reports,
   };

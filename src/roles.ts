@@ -516,6 +516,10 @@ export async function ensureRoleTemplatesExist(role: RoleDefinition): Promise<vo
       filePath: path.join(role.sharedPromptsDir, SHARED_AGENT_TEMPLATE_DIR, "inbox.md"),
       errorMessage: `Role ${role.id} is missing shared agent template: prompts/templates/agent/inbox.md`,
     },
+    {
+      filePath: path.join(role.sharedPromptsDir, SHARED_AGENT_TEMPLATE_DIR, "one-on-one.md"),
+      errorMessage: `Role ${role.id} is missing shared agent template: prompts/templates/agent/one-on-one.md`,
+    },
     ...role.entities.flatMap((entity) =>
       entity.files.map((file) => ({
         filePath: path.join(role.entityDefsDir, file.template),

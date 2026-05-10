@@ -122,7 +122,7 @@ role_directories:
 
 Shared template starters:
 
-Copy from `prompts/templates/agent/record.md` and `prompts/templates/agent/inbox.md` when the runtime has not scaffolded them. The canonical templates include GTD sections (Active Projects, Next Actions, Waiting For, Calendar, Someday Or Maybe, Strategic Experiments, Strategic Observations) and an inbox Purpose section. Do not omit those sections when creating files manually.
+Copy from `prompts/templates/agent/record.md`, `prompts/templates/agent/inbox.md`, and `prompts/templates/agent/one-on-one.md` when the runtime has not scaffolded them. The canonical templates include GTD sections (Active Projects, Next Actions, Waiting For, Calendar, Someday Or Maybe, Strategic Experiments, Strategic Observations), an inbox Purpose section, and a durable 1 on 1 log scaffold. Do not omit those sections when creating files manually.
 
 Anti-patterns:
 - Packing domain detail into `role.md` instead of `AGENTS.md`.

@@ -39,6 +39,7 @@ const savedConversationCount = conversations.filter((conversation) => conversati
               <div class="conversation-card__actions">
                 <a class="action-button" href={conversation.agentHref}>Agent definition</a>
                 <a class="action-button action-button--secondary" href={conversation.conversationHref}>Last conversation</a>
+                <a class="action-button action-button--secondary" href={`/agents/${conversation.roleId}/one-on-one`}>1 on 1</a>
               </div>
             </div>
 
