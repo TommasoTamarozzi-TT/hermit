@@ -22,7 +22,7 @@ Use this file to keep a short summary of what the agent has done, what needs att
 
 - None right now.
 
-## Current Action Points For Tommaso
+## Current Action Points For The User
 
 - None right now.
 
@@ -34,5 +34,5 @@ Use this file to keep a short summary of what the agent has done, what needs att
 - Summary: Placeholder file created from the shared agent template.
 - Action points for {{roleNameYaml}}:
   - None right now.
-- Action points for Tommaso:
+- Action points for the user:
   - None right now.
