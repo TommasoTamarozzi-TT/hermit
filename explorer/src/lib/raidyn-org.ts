@@ -41,7 +41,9 @@ export const boardMembers: OrgPerson[] = [
 const virtualReportPriority = new Map<string, number>([
   ["business-analyst", 0],
   ["sales-representative", 1],
-  ["secretary", 2],
+  ["application-engineer", 2],
+  ["head-of-procurement", 3],
+  ["secretary", 4],
 ]);
 
 function withHref(role: ExplorerRoleSummary): OrgRoleSummary {
