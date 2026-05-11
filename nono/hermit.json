@@ -30,6 +30,8 @@
       "api.telegram.org",
       "login.microsoftonline.com",
       "graph.microsoft.com",
+      "raidyn.sharepoint.com",
+      "westeurope1-mediap.svc.ms",
       "slack.com",
       "sparky-002.tyrannosaurus-garibaldi.ts.net"
     ]
