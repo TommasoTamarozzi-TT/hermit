@@ -101,5 +101,24 @@ const appName = "Raidyn Virtual Assistent - Explorer";
         });
       })();
     </script>
+
+    <script is:inline>
+      (() => {
+        const closeExplorerFoldables = () => {
+          document
+            .querySelectorAll("details.foldable-card, details.procurement-section, details[data-home-todo]")
+            .forEach((item) => {
+              if (item instanceof HTMLDetailsElement) {
+                item.open = false;
+                item.removeAttribute("open");
+              }
+            });
+        };
+
+        closeExplorerFoldables();
+        document.addEventListener("DOMContentLoaded", closeExplorerFoldables);
+        document.addEventListener("astro:page-load", closeExplorerFoldables);
+      })();
+    </script>
   </body>
 </html>
