@@ -423,9 +423,9 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
           <p class="foldable-meta">User-requested items stay separate from secretary-managed follow-through.</p>
         </div>
         <div class="todo-summary-badges">
-          <span class="priority-pill priority-pill--high">{userHighPriorityCount} user high</span>
-          <span class="priority-pill priority-pill--medium">{userMediumPriorityCount} user medium</span>
-          <span class="priority-pill priority-pill--neutral">{userRequestedItems.length} user total</span>
+          <span class="priority-pill priority-pill--high" data-user-summary-high>{userHighPriorityCount} user high</span>
+          <span class="priority-pill priority-pill--medium" data-user-summary-medium>{userMediumPriorityCount} user medium</span>
+          <span class="priority-pill priority-pill--neutral" data-user-summary-overall>{userRequestedItems.length} user total</span>
           <span class="priority-pill priority-pill--neutral">{secretaryManagedItems.length} secretary total</span>
         </div>
       </summary>
@@ -442,8 +442,7 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
             </summary>
             <div class="foldable-body todo-category-body">
               <div class="todo-toolbar">
-                <p class="meta">Categories start closed. <strong>Done / delete</strong> hides only user-requested items in this browser. <strong>Reset list</strong> restores them.</p>
-                <button type="button" class="todo-reset-button" data-user-todo-reset>Reset list</button>
+                <p class="meta">Categories start closed. <strong>Done / delete</strong> removes the item from the real user-requested todo list immediately.</p>
               </div>
               <div class="todo-category-grid">
                 {userRequestedCategories.map((category) => (
@@ -458,7 +457,7 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
                     <div class="foldable-body todo-category-body">
                       <ul class="todo-item-list">
                         {category.items.map((item) => (
-                          <li class="todo-item" data-user-todo-item data-todo-id={item.id}>
+                          <li class="todo-item" data-user-todo-item data-todo-id={item.id} data-todo-priority={item.priority}>
                             <div class="todo-item__content">
                               <span class={`priority-pill priority-pill--${item.priority}`}>
                                 {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
@@ -475,7 +474,7 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
                   </details>
                 ))}
               </div>
-              <p class="todo-empty-state meta" data-user-todo-empty hidden>All user-requested tasks are hidden in this browser. Use Reset list to show them again.</p>
+              <p class="todo-empty-state meta" data-user-todo-empty hidden>All user-requested tasks have been removed from the live todo list.</p>
             </div>
           </details>
 
@@ -524,37 +523,33 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
 
   <script is:inline>
     (() => {
-      const storageKey = "raidyn-home-hidden-user-todos";
       const itemSelector = "[data-user-todo-item]";
       const categorySelector = "[data-user-category-id]";
       const emptyState = document.querySelector("[data-user-todo-empty]");
-      const resetButton = document.querySelector("[data-user-todo-reset]");
       const totalBadge = document.querySelector("[data-user-summary-total]");
-
-      const readHiddenIds = () => {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
-          return Array.isArray(parsed) ? new Set(parsed.filter((value) => typeof value === "string")) : new Set();
-        } catch {
-          return new Set();
-        }
-      };
-
-      const writeHiddenIds = (hiddenIds) => {
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(Array.from(hiddenIds)));
-        } catch {
-          // Ignore storage failures and keep the UI responsive.
-        }
-      };
+      const overallBadge = document.querySelector("[data-user-summary-overall]");
+      const highBadge = document.querySelector("[data-user-summary-high]");
+      const mediumBadge = document.querySelector("[data-user-summary-medium]");
 
       const visibleItems = () =>
         Array.from(document.querySelectorAll(itemSelector)).filter((item) => item instanceof HTMLElement && !item.hidden);
 
       const updateCounts = () => {
         const items = visibleItems();
+        const highCount = items.filter((item) => item.dataset.todoPriority === "high").length;
+        const mediumCount = items.filter((item) => item.dataset.todoPriority === "medium").length;
+
         if (totalBadge) {
           totalBadge.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
+        }
+        if (overallBadge) {
+          overallBadge.textContent = `${items.length} user total`;
+        }
+        if (highBadge) {
+          highBadge.textContent = `${highCount} user high`;
+        }
+        if (mediumBadge) {
+          mediumBadge.textContent = `${mediumCount} user medium`;
         }
         if (emptyState instanceof HTMLElement) {
           emptyState.hidden = items.length > 0;
@@ -569,32 +564,64 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
           const visibleChildren = Array.from(category.querySelectorAll(itemSelector)).filter(
             (item) => item instanceof HTMLElement && !item.hidden,
           );
-          category.hidden = visibleChildren.length === 0;
+          const count = visibleChildren.length;
+          const countBadge = category.querySelector(".todo-category-count");
+          if (countBadge) {
+            countBadge.textContent = `${count} item${count === 1 ? "" : "s"}`;
+          }
+          category.hidden = count === 0;
         });
       };
 
-      const hideTask = (todoId) => {
-        if (!todoId) {
+      const removeTaskFromDom = (todoId) => {
+        const item = document.querySelector(`${itemSelector}[data-todo-id="${CSS.escape(todoId)}"]`);
+        if (!(item instanceof HTMLElement)) {
           return;
         }
-        const hiddenIds = readHiddenIds();
-        hiddenIds.add(todoId);
-        writeHiddenIds(hiddenIds);
-        applyHiddenIds();
-      };
-
-      const applyHiddenIds = () => {
-        const hiddenIds = readHiddenIds();
-        document.querySelectorAll(itemSelector).forEach((item) => {
-          if (!(item instanceof HTMLElement)) {
-            return;
-          }
-          const todoId = item.dataset.todoId || "";
-          item.hidden = hiddenIds.has(todoId);
-          item.style.display = item.hidden ? "none" : "";
-        });
+        item.remove();
         updateCategoryVisibility();
         updateCounts();
+      };
+
+      const setButtonBusy = (button, busy) => {
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+        button.disabled = busy;
+        button.textContent = busy ? "Deleting…" : "Done / delete";
+      };
+
+      const deleteTodo = async (button) => {
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+        const todoId = button.getAttribute("data-user-todo-delete") || "";
+        const item = button.closest(itemSelector);
+        const label = item?.querySelector(".todo-item__label")?.textContent?.trim() || "";
+        if (!todoId || !label) {
+          return;
+        }
+
+        setButtonBusy(button, true);
+        try {
+          const response = await fetch("/api/secretary-todos/delete", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ todoId, label }),
+          });
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload?.error || "Delete failed.");
+          }
+
+          removeTaskFromDom(todoId);
+        } catch (error) {
+          window.alert(error instanceof Error ? error.message : "Delete failed.");
+          setButtonBusy(button, false);
+        }
       };
 
       document.addEventListener("click", (event) => {
@@ -607,18 +634,12 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
         if (deleteButton) {
           event.preventDefault();
           event.stopPropagation();
-          hideTask(deleteButton.getAttribute("data-user-todo-delete"));
-          return;
-        }
-
-        if (resetButton instanceof HTMLButtonElement && target === resetButton) {
-          event.preventDefault();
-          writeHiddenIds(new Set());
-          applyHiddenIds();
+          void deleteTodo(deleteButton);
         }
       });
 
-      applyHiddenIds();
+      updateCategoryVisibility();
+      updateCounts();
     })();
   </script>
 </BaseLayout>
