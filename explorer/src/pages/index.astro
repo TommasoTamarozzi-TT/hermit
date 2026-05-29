@@ -107,18 +107,17 @@ async function loadRaidynCrossRolePrioritiesHtml(): Promise<string> {
   return renderMarkdown(sectionMarkdown);
 }
 
-async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
-  const raw = await fs.readFile(secretaryRecordPath, "utf8").catch(() => "");
-  if (!raw) {
-    return [];
-  }
+function extractSubheadingSection(markdown: string, heading: string): string {
+  const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = markdown.match(new RegExp(`### ${escapedHeading}\\n([\\s\\S]*?)(?:\\n### |$)`));
+  return match?.[1]?.trim() ?? "";
+}
 
-  const nextActionsMatch = raw.match(/## Next Actions\s+([\s\S]*?)\n## /);
-  const nextActionsBlock = nextActionsMatch?.[1] ?? "";
+function parseTodoLines(block: string, defaultPriority: TodoPriority = "medium"): TodoTaskInput[] {
   const tasks: TodoTaskInput[] = [];
-  let currentPriority: TodoPriority | null = null;
+  let currentPriority: TodoPriority = defaultPriority;
 
-  for (const line of nextActionsBlock.split("\n")) {
+  for (const line of block.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed) {
       continue;
@@ -140,38 +139,34 @@ async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
       currentPriority = "needs-triage";
       continue;
     }
-
     if (!trimmed.startsWith("- ")) {
       continue;
     }
 
     const content = trimmed.slice(2).trim();
+    const explicitHigh = content.match(/^High priority:\s*(.+)$/i);
+    const explicitMedium = content.match(/^Medium priority:\s*(.+)$/i);
+    const explicitLow = content.match(/^Low priority:\s*(.+)$/i);
+    const explicitTriage = content.match(/^Priority not yet set:\s*(.+)$/i);
 
-    let priority: TodoPriority | null = currentPriority;
-    let label = "";
+    let priority = currentPriority;
+    let label = cleanTaskLabel(content);
 
-    const highMatch = content.match(/^High priority:\s*(.+)$/i);
-    const mediumMatch = content.match(/^Medium priority:\s*(.+)$/i);
-    const lowMatch = content.match(/^Low priority:\s*(.+)$/i);
-    const triageMatch = content.match(/^Priority not yet set:\s*(.+)$/i);
-
-    if (highMatch) {
+    if (explicitHigh) {
       priority = "high";
-      label = cleanTaskLabel(highMatch[1]);
-    } else if (mediumMatch) {
+      label = cleanTaskLabel(explicitHigh[1]);
+    } else if (explicitMedium) {
       priority = "medium";
-      label = cleanTaskLabel(mediumMatch[1]);
-    } else if (lowMatch) {
+      label = cleanTaskLabel(explicitMedium[1]);
+    } else if (explicitLow) {
       priority = "low";
-      label = cleanTaskLabel(lowMatch[1]);
-    } else if (triageMatch) {
+      label = cleanTaskLabel(explicitLow[1]);
+    } else if (explicitTriage) {
       priority = "needs-triage";
-      label = cleanTaskLabel(triageMatch[1]);
-    } else {
-      label = cleanTaskLabel(content);
+      label = cleanTaskLabel(explicitTriage[1]);
     }
 
-    if (!priority || !label) {
+    if (!label) {
       continue;
     }
 
@@ -185,10 +180,27 @@ async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
   return tasks;
 }
 
-const prioritiesHtml = await loadRaidynCrossRolePrioritiesHtml();
-const dynamicTasks = await loadSecretaryTodoTasks();
+async function loadSecretaryTodoSections(): Promise<{ userRequested: TodoTaskInput[]; secretaryManaged: TodoTaskInput[] }> {
+  const raw = await fs.readFile(secretaryRecordPath, "utf8").catch(() => "");
+  if (!raw) {
+    return { userRequested: [], secretaryManaged: [] };
+  }
 
-const rawTasks: TodoTaskInput[] = [
+  const nextActionsMatch = raw.match(/## Next Actions\s+([\s\S]*?)\n## /);
+  const nextActionsBlock = nextActionsMatch?.[1] ?? "";
+  const userRequestedBlock = extractSubheadingSection(nextActionsBlock, "User-requested todo list");
+  const secretaryManagedBlock = extractSubheadingSection(nextActionsBlock, "Secretary-managed todo list");
+
+  return {
+    userRequested: parseTodoLines(userRequestedBlock, "medium"),
+    secretaryManaged: parseTodoLines(secretaryManagedBlock, "medium"),
+  };
+}
+
+const prioritiesHtml = await loadRaidynCrossRolePrioritiesHtml();
+const todoSections = await loadSecretaryTodoSections();
+
+const fallbackTasks: TodoTaskInput[] = [
   {
     label: "Allow to debug production code",
     priority: "high",
@@ -319,7 +331,6 @@ const rawTasks: TodoTaskInput[] = [
     priority: "low",
     category: "marketing-web",
   },
-  ...dynamicTasks,
 ];
 
 const priorityRank: Record<TodoPriority, number> = {
@@ -335,54 +346,32 @@ const toTaskId = (label: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const uniqueTasks = Array.from(
-  new Map(rawTasks.map((task) => [normalizeTaskLabel(task.label), task])).values(),
-);
+function buildTodoItems(tasks: TodoTaskInput[]): TodoItem[] {
+  const uniqueTasks = Array.from(
+    new Map(tasks.map((task) => [normalizeTaskLabel(task.label), task])).values(),
+  );
 
-const sortedTasks: TodoItem[] = uniqueTasks
-  .map((task) => ({
-    ...task,
-    id: toTaskId(task.label),
-  }))
-  .sort((a, b) => {
-    const priorityDiff = priorityRank[a.priority] - priorityRank[b.priority];
-    if (priorityDiff !== 0) {
-      return priorityDiff;
-    }
-    const categoryDiff = categoryMeta[a.category].title.localeCompare(categoryMeta[b.category].title);
-    if (categoryDiff !== 0) {
-      return categoryDiff;
-    }
-    return a.label.localeCompare(b.label);
-  });
-
-const groupedCategories = new Map<TodoCategoryId, TodoItem[]>();
-for (const task of sortedTasks) {
-  const current = groupedCategories.get(task.category) ?? [];
-  current.push(task);
-  groupedCategories.set(task.category, current);
+  return uniqueTasks
+    .map((task) => ({
+      ...task,
+      id: toTaskId(task.label),
+    }))
+    .sort((a, b) => {
+      const priorityDiff = priorityRank[a.priority] - priorityRank[b.priority];
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
+      return a.label.localeCompare(b.label);
+    });
 }
 
-const todoCategories: TodoCategory[] = Array.from(groupedCategories.entries())
-  .map(([id, items]) => ({
-    id,
-    title: categoryMeta[id].title,
-    description: categoryMeta[id].description,
-    items,
-  }))
-  .sort((a, b) => {
-    const aTopPriority = Math.min(...a.items.map((item) => priorityRank[item.priority]));
-    const bTopPriority = Math.min(...b.items.map((item) => priorityRank[item.priority]));
-    if (aTopPriority !== bTopPriority) {
-      return aTopPriority - bTopPriority;
-    }
-    return a.title.localeCompare(b.title);
-  });
+const userRequestedItems = buildTodoItems(
+  todoSections.userRequested.length > 0 ? todoSections.userRequested : fallbackTasks,
+);
+const secretaryManagedItems = buildTodoItems(todoSections.secretaryManaged);
 
-const highPriorityCount = sortedTasks.filter((item) => item.priority === "high").length;
-const mediumPriorityCount = sortedTasks.filter((item) => item.priority === "medium").length;
-const lowPriorityCount = sortedTasks.filter((item) => item.priority === "low").length;
-const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage").length;
+const userHighPriorityCount = userRequestedItems.filter((item) => item.priority === "high").length;
+const userMediumPriorityCount = userRequestedItems.filter((item) => item.priority === "medium").length;
 ---
 <BaseLayout title="Raidyn Virtual Assistent - Explorer">
   {prioritiesHtml && (
@@ -400,173 +389,71 @@ const triageCount = sortedTasks.filter((item) => item.priority === "needs-triage
   )}
 
   <section class="card foldable-card home-todo-card">
-    <details data-home-todo>
+    <details data-home-todo open>
       <summary class="foldable-summary">
         <div>
-          <div class="foldable-title">To-do list</div>
-          <p class="foldable-meta">Grouped by category and ordered by priority.</p>
+          <div class="foldable-title">Secretary to-do lists</div>
+          <p class="foldable-meta">User-requested items stay separate from secretary-managed follow-through.</p>
         </div>
         <div class="todo-summary-badges">
-          <span class="priority-pill priority-pill--high" data-summary-high>{highPriorityCount} high</span>
-          <span class="priority-pill priority-pill--medium" data-summary-medium>{mediumPriorityCount} medium</span>
-          <span class="priority-pill priority-pill--low" data-summary-low>{lowPriorityCount} low</span>
-          <span class="priority-pill priority-pill--needs-triage" data-summary-triage>{triageCount} needs priority</span>
-          <span class="priority-pill priority-pill--neutral" data-summary-total>{sortedTasks.length} total</span>
+          <span class="priority-pill priority-pill--high">{userHighPriorityCount} user high</span>
+          <span class="priority-pill priority-pill--medium">{userMediumPriorityCount} user medium</span>
+          <span class="priority-pill priority-pill--neutral">{userRequestedItems.length} user total</span>
+          <span class="priority-pill priority-pill--neutral">{secretaryManagedItems.length} secretary total</span>
         </div>
       </summary>
 
       <div class="foldable-body todo-body">
-        <div class="todo-toolbar">
-          <p class="meta">Each category can be folded. <strong>Delete</strong> hides a task in this browser. <strong>Reset list</strong> restores hidden items.</p>
-          <button type="button" class="todo-reset-button" data-todo-reset>Reset list</button>
-        </div>
-
-        <div class="todo-category-grid" data-todo-category-grid>
-          {todoCategories.map((category) => (
-            <details class="todo-category-card foldable-card" data-category-id={category.id}>
-              <summary class="foldable-summary todo-category-summary">
-                <div>
-                  <h3>{category.title}</h3>
-                  <p class="meta">{category.description}</p>
-                </div>
-                <span class="todo-category-count">{category.items.length} item{category.items.length === 1 ? "" : "s"}</span>
-              </summary>
-
-              <div class="foldable-body todo-category-body">
-                <ul class="todo-item-list">
-                  {category.items.map((item) => (
-                    <li class="todo-item" data-todo-item data-todo-id={item.id}>
-                      <div class="todo-item__content">
-                        <span class={`priority-pill priority-pill--${item.priority}`}>
-                          {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
-                        </span>
-                        <p class="todo-item__label">{item.label}</p>
-                      </div>
-                      <button type="button" class="todo-delete-button" data-todo-delete={item.id} aria-label={`Delete ${item.label}`}>
-                        Delete
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+        <div class="todo-category-grid">
+          <details class="todo-category-card foldable-card" open>
+            <summary class="foldable-summary todo-category-summary">
+              <div>
+                <h3>User-requested to-do list</h3>
+                <p class="meta">These are the items Tommaso explicitly asked to create.</p>
               </div>
-            </details>
-          ))}
-        </div>
+              <span class="todo-category-count">{userRequestedItems.length} item{userRequestedItems.length === 1 ? "" : "s"}</span>
+            </summary>
+            <div class="foldable-body todo-category-body">
+              <ul class="todo-item-list">
+                {userRequestedItems.map((item) => (
+                  <li class="todo-item" data-todo-id={item.id}>
+                    <div class="todo-item__content">
+                      <span class={`priority-pill priority-pill--${item.priority}`}>
+                        {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
+                      </span>
+                      <p class="todo-item__label">{item.label}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
 
-        <p class="todo-empty-state meta" data-todo-empty hidden>All current tasks are hidden in this browser. Use Reset list to show them again.</p>
+          <details class="todo-category-card foldable-card" open>
+            <summary class="foldable-summary todo-category-summary">
+              <div>
+                <h3>Secretary-managed to-do list</h3>
+                <p class="meta">These are the short follow-through items the Secretary is keeping alive without replacing the user list.</p>
+              </div>
+              <span class="todo-category-count">{secretaryManagedItems.length} item{secretaryManagedItems.length === 1 ? "" : "s"}</span>
+            </summary>
+            <div class="foldable-body todo-category-body">
+              <ul class="todo-item-list">
+                {secretaryManagedItems.map((item) => (
+                  <li class="todo-item" data-todo-id={item.id}>
+                    <div class="todo-item__content">
+                      <span class={`priority-pill priority-pill--${item.priority}`}>
+                        {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
+                      </span>
+                      <p class="todo-item__label">{item.label}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        </div>
       </div>
     </details>
   </section>
-
-  <script is:inline>
-    (() => {
-      const storageKey = "raidyn-home-hidden-todos";
-      const itemSelector = "[data-todo-item]";
-      const categorySelector = "[data-category-id]";
-      const emptyState = document.querySelector("[data-todo-empty]");
-      const resetButton = document.querySelector("[data-todo-reset]");
-      const highBadge = document.querySelector("[data-summary-high]");
-      const mediumBadge = document.querySelector("[data-summary-medium]");
-      const lowBadge = document.querySelector("[data-summary-low]");
-      const triageBadge = document.querySelector("[data-summary-triage]");
-      const totalBadge = document.querySelector("[data-summary-total]");
-
-      const readHiddenIds = () => {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
-          return Array.isArray(parsed) ? new Set(parsed.filter((value) => typeof value === "string")) : new Set();
-        } catch {
-          return new Set();
-        }
-      };
-
-      const writeHiddenIds = (hiddenIds) => {
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(Array.from(hiddenIds)));
-        } catch {
-          // Ignore storage failures and keep the UI responsive.
-        }
-      };
-
-      const visibleItems = () =>
-        Array.from(document.querySelectorAll(itemSelector)).filter((item) => item instanceof HTMLElement && !item.hidden);
-
-      const updateCounts = () => {
-        const items = visibleItems();
-        const highCount = items.filter((item) => item.querySelector(".priority-pill--high")).length;
-        const mediumCount = items.filter((item) => item.querySelector(".priority-pill--medium")).length;
-        const lowCount = items.filter((item) => item.querySelector(".priority-pill--low")).length;
-        const triageCount = items.filter((item) => item.querySelector(".priority-pill--needs-triage")).length;
-
-        if (highBadge) highBadge.textContent = `${highCount} high`;
-        if (mediumBadge) mediumBadge.textContent = `${mediumCount} medium`;
-        if (lowBadge) lowBadge.textContent = `${lowCount} low`;
-        if (triageBadge) triageBadge.textContent = `${triageCount} needs priority`;
-        if (totalBadge) totalBadge.textContent = `${items.length} total`;
-
-        if (emptyState instanceof HTMLElement) {
-          emptyState.hidden = items.length > 0;
-        }
-      };
-
-      const updateCategoryVisibility = () => {
-        document.querySelectorAll(categorySelector).forEach((category) => {
-          if (!(category instanceof HTMLElement)) {
-            return;
-          }
-          const visibleChildren = Array.from(category.querySelectorAll(itemSelector)).filter(
-            (item) => item instanceof HTMLElement && !item.hidden,
-          );
-          category.hidden = visibleChildren.length === 0;
-        });
-      };
-
-      const hideTask = (todoId) => {
-        if (!todoId) {
-          return;
-        }
-        const hiddenIds = readHiddenIds();
-        hiddenIds.add(todoId);
-        writeHiddenIds(hiddenIds);
-        applyHiddenIds();
-      };
-
-      const applyHiddenIds = () => {
-        const hiddenIds = readHiddenIds();
-        document.querySelectorAll(itemSelector).forEach((item) => {
-          if (!(item instanceof HTMLElement)) {
-            return;
-          }
-          const todoId = item.dataset.todoId || "";
-          item.hidden = hiddenIds.has(todoId);
-          item.style.display = item.hidden ? "none" : "";
-        });
-        updateCategoryVisibility();
-        updateCounts();
-      };
-
-      document.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) {
-          return;
-        }
-
-        const deleteButton = target.closest("[data-todo-delete]");
-        if (deleteButton) {
-          event.preventDefault();
-          event.stopPropagation();
-          hideTask(deleteButton.getAttribute("data-todo-delete"));
-          return;
-        }
-
-        if (resetButton instanceof HTMLButtonElement && target === resetButton) {
-          event.preventDefault();
-          writeHiddenIds(new Set());
-          applyHiddenIds();
-        }
-      });
-
-      applyHiddenIds();
-    })();
-  </script>
 </BaseLayout>

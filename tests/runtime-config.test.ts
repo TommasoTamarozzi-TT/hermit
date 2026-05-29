@@ -15,6 +15,15 @@ describe("runtime-config", () => {
   });
 
   it("uses workspace runtime tier defaults when no env override is set", async () => {
+    vi.stubEnv("ROLE_AGENT_MODEL", "");
+    vi.stubEnv("ROLE_AGENT_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_AGENT_TIER", "");
+    vi.stubEnv("ROLE_HEARTBEAT_MODEL", "");
+    vi.stubEnv("ROLE_HEARTBEAT_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_HEARTBEAT_TIER", "");
+    vi.stubEnv("ROLE_STRATEGIC_REVIEW_MODEL", "");
+    vi.stubEnv("ROLE_STRATEGIC_REVIEW_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_STRATEGIC_REVIEW_TIER", "");
     const root = makeWorkspaceRoot();
     mkdirSync(path.join(root, ".hermit"), { recursive: true });
     writeFileSync(
