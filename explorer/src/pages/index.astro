@@ -365,10 +365,37 @@ function buildTodoItems(tasks: TodoTaskInput[]): TodoItem[] {
     });
 }
 
+function buildTodoCategories(items: TodoItem[]): TodoCategory[] {
+  const groupedCategories = new Map<TodoCategoryId, TodoItem[]>();
+  for (const item of items) {
+    const current = groupedCategories.get(item.category) ?? [];
+    current.push(item);
+    groupedCategories.set(item.category, current);
+  }
+
+  return Array.from(groupedCategories.entries())
+    .map(([id, categoryItems]) => ({
+      id,
+      title: categoryMeta[id].title,
+      description: categoryMeta[id].description,
+      items: categoryItems,
+    }))
+    .sort((a, b) => {
+      const aTopPriority = Math.min(...a.items.map((item) => priorityRank[item.priority]));
+      const bTopPriority = Math.min(...b.items.map((item) => priorityRank[item.priority]));
+      if (aTopPriority !== bTopPriority) {
+        return aTopPriority - bTopPriority;
+      }
+      return a.title.localeCompare(b.title);
+    });
+}
+
 const userRequestedItems = buildTodoItems(
   todoSections.userRequested.length > 0 ? todoSections.userRequested : fallbackTasks,
 );
 const secretaryManagedItems = buildTodoItems(todoSections.secretaryManaged);
+const userRequestedCategories = buildTodoCategories(userRequestedItems);
+const secretaryManagedCategories = buildTodoCategories(secretaryManagedItems);
 
 const userHighPriorityCount = userRequestedItems.filter((item) => item.priority === "high").length;
 const userMediumPriorityCount = userRequestedItems.filter((item) => item.priority === "medium").length;
@@ -411,21 +438,44 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
                 <h3>User-requested to-do list</h3>
                 <p class="meta">These are the items Tommaso explicitly asked to create.</p>
               </div>
-              <span class="todo-category-count">{userRequestedItems.length} item{userRequestedItems.length === 1 ? "" : "s"}</span>
+              <span class="todo-category-count" data-user-summary-total>{userRequestedItems.length} item{userRequestedItems.length === 1 ? "" : "s"}</span>
             </summary>
             <div class="foldable-body todo-category-body">
-              <ul class="todo-item-list">
-                {userRequestedItems.map((item) => (
-                  <li class="todo-item" data-todo-id={item.id}>
-                    <div class="todo-item__content">
-                      <span class={`priority-pill priority-pill--${item.priority}`}>
-                        {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
-                      </span>
-                      <p class="todo-item__label">{item.label}</p>
+              <div class="todo-toolbar">
+                <p class="meta">Categories start closed. <strong>Done / delete</strong> hides only user-requested items in this browser. <strong>Reset list</strong> restores them.</p>
+                <button type="button" class="todo-reset-button" data-user-todo-reset>Reset list</button>
+              </div>
+              <div class="todo-category-grid">
+                {userRequestedCategories.map((category) => (
+                  <details class="todo-category-card foldable-card" data-user-category-id={category.id}>
+                    <summary class="foldable-summary todo-category-summary">
+                      <div>
+                        <h3>{category.title}</h3>
+                        <p class="meta">{category.description}</p>
+                      </div>
+                      <span class="todo-category-count">{category.items.length} item{category.items.length === 1 ? "" : "s"}</span>
+                    </summary>
+                    <div class="foldable-body todo-category-body">
+                      <ul class="todo-item-list">
+                        {category.items.map((item) => (
+                          <li class="todo-item" data-user-todo-item data-todo-id={item.id}>
+                            <div class="todo-item__content">
+                              <span class={`priority-pill priority-pill--${item.priority}`}>
+                                {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
+                              </span>
+                              <p class="todo-item__label">{item.label}</p>
+                            </div>
+                            <button type="button" class="todo-delete-button" data-user-todo-delete={item.id} aria-label={`Remove ${item.label}`}>
+                              Done / delete
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </li>
+                  </details>
                 ))}
-              </ul>
+              </div>
+              <p class="todo-empty-state meta" data-user-todo-empty hidden>All user-requested tasks are hidden in this browser. Use Reset list to show them again.</p>
             </div>
           </details>
 
@@ -438,22 +488,137 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
               <span class="todo-category-count">{secretaryManagedItems.length} item{secretaryManagedItems.length === 1 ? "" : "s"}</span>
             </summary>
             <div class="foldable-body todo-category-body">
-              <ul class="todo-item-list">
-                {secretaryManagedItems.map((item) => (
-                  <li class="todo-item" data-todo-id={item.id}>
-                    <div class="todo-item__content">
-                      <span class={`priority-pill priority-pill--${item.priority}`}>
-                        {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
-                      </span>
-                      <p class="todo-item__label">{item.label}</p>
+              <div class="todo-category-grid">
+                {secretaryManagedCategories.map((category) => (
+                  <details class="todo-category-card foldable-card">
+                    <summary class="foldable-summary todo-category-summary">
+                      <div>
+                        <h3>{category.title}</h3>
+                        <p class="meta">{category.description}</p>
+                      </div>
+                      <span class="todo-category-count">{category.items.length} item{category.items.length === 1 ? "" : "s"}</span>
+                    </summary>
+                    <div class="foldable-body todo-category-body">
+                      <ul class="todo-item-list">
+                        {category.items.map((item) => (
+                          <li class="todo-item" data-todo-id={item.id}>
+                            <div class="todo-item__content">
+                              <span class={`priority-pill priority-pill--${item.priority}`}>
+                                {item.priority === "needs-triage" ? "needs priority" : `${item.priority} priority`}
+                              </span>
+                              <p class="todo-item__label">{item.label}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </li>
+                  </details>
                 ))}
-              </ul>
+              </div>
             </div>
           </details>
         </div>
       </div>
     </details>
   </section>
+
+  <script is:inline>
+    (() => {
+      const storageKey = "raidyn-home-hidden-user-todos";
+      const itemSelector = "[data-user-todo-item]";
+      const categorySelector = "[data-user-category-id]";
+      const emptyState = document.querySelector("[data-user-todo-empty]");
+      const resetButton = document.querySelector("[data-user-todo-reset]");
+      const totalBadge = document.querySelector("[data-user-summary-total]");
+
+      const readHiddenIds = () => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
+          return Array.isArray(parsed) ? new Set(parsed.filter((value) => typeof value === "string")) : new Set();
+        } catch {
+          return new Set();
+        }
+      };
+
+      const writeHiddenIds = (hiddenIds) => {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(hiddenIds)));
+        } catch {
+          // Ignore storage failures and keep the UI responsive.
+        }
+      };
+
+      const visibleItems = () =>
+        Array.from(document.querySelectorAll(itemSelector)).filter((item) => item instanceof HTMLElement && !item.hidden);
+
+      const updateCounts = () => {
+        const items = visibleItems();
+        if (totalBadge) {
+          totalBadge.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
+        }
+        if (emptyState instanceof HTMLElement) {
+          emptyState.hidden = items.length > 0;
+        }
+      };
+
+      const updateCategoryVisibility = () => {
+        document.querySelectorAll(categorySelector).forEach((category) => {
+          if (!(category instanceof HTMLElement)) {
+            return;
+          }
+          const visibleChildren = Array.from(category.querySelectorAll(itemSelector)).filter(
+            (item) => item instanceof HTMLElement && !item.hidden,
+          );
+          category.hidden = visibleChildren.length === 0;
+        });
+      };
+
+      const hideTask = (todoId) => {
+        if (!todoId) {
+          return;
+        }
+        const hiddenIds = readHiddenIds();
+        hiddenIds.add(todoId);
+        writeHiddenIds(hiddenIds);
+        applyHiddenIds();
+      };
+
+      const applyHiddenIds = () => {
+        const hiddenIds = readHiddenIds();
+        document.querySelectorAll(itemSelector).forEach((item) => {
+          if (!(item instanceof HTMLElement)) {
+            return;
+          }
+          const todoId = item.dataset.todoId || "";
+          item.hidden = hiddenIds.has(todoId);
+          item.style.display = item.hidden ? "none" : "";
+        });
+        updateCategoryVisibility();
+        updateCounts();
+      };
+
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const deleteButton = target.closest("[data-user-todo-delete]");
+        if (deleteButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          hideTask(deleteButton.getAttribute("data-user-todo-delete"));
+          return;
+        }
+
+        if (resetButton instanceof HTMLButtonElement && target === resetButton) {
+          event.preventDefault();
+          writeHiddenIds(new Set());
+          applyHiddenIds();
+        }
+      });
+
+      applyHiddenIds();
+    })();
+  </script>
 </BaseLayout>
