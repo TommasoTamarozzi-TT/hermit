@@ -95,6 +95,9 @@ describe("runtime-config", () => {
     vi.stubEnv("ROLE_AGENT_MODEL", "openai/gpt-5.4");
     vi.stubEnv("ROLE_AGENT_FALLBACK_MODELS", "");
     vi.stubEnv("ROLE_AGENT_TIER", "");
+    vi.stubEnv("ROLE_INTERACTIVE_MODEL", "");
+    vi.stubEnv("ROLE_INTERACTIVE_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_INTERACTIVE_TIER", "");
 
     await expect(resolveSessionModelPreferences(root, "heartbeat")).resolves.toEqual({
       preferredModel: "local/gemma4",
