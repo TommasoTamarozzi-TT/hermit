@@ -22,6 +22,12 @@ export interface HeartbeatDaemonCyclePlan {
   targetIds: string[];
 }
 
+export interface ResolvedDueHeartbeatRoles {
+  dueRoleIds: string[];
+  deferredRoleIds: string[];
+  nextDueDelayMs?: number;
+}
+
 export interface HeartbeatDaemonStopResult {
   requested: boolean;
   abortedActiveSession: boolean;
@@ -86,6 +92,44 @@ export function planHeartbeatDaemonCycle(roleIds: string[], strategicReviewSweep
   return {
     mode: strategicReviewSweepDue ? "strategic-review" : "heartbeat",
     targetIds: strategicReviewSweepDue ? resolveHeartbeatDaemonTargetIds(roleIds) : roleIds,
+  };
+}
+
+export function resolveDueHeartbeatRoles(options: {
+  roleIds: string[];
+  defaultIntervalMs: number;
+  roleIntervalsMs?: Record<string, number>;
+  lastCompletedAtMsByRoleId?: Record<string, number>;
+  nowMs?: number;
+}): ResolvedDueHeartbeatRoles {
+  const dueRoleIds: string[] = [];
+  const deferredRoleIds: string[] = [];
+  let nextDueDelayMs: number | undefined;
+  const nowMs = options.nowMs ?? Date.now();
+
+  for (const roleId of options.roleIds) {
+    const intervalMs = options.roleIntervalsMs?.[roleId] ?? options.defaultIntervalMs;
+    const lastCompletedAtMs = options.lastCompletedAtMsByRoleId?.[roleId];
+    if (lastCompletedAtMs === undefined) {
+      dueRoleIds.push(roleId);
+      continue;
+    }
+
+    const elapsedMs = Math.max(0, nowMs - lastCompletedAtMs);
+    if (elapsedMs >= intervalMs) {
+      dueRoleIds.push(roleId);
+      continue;
+    }
+
+    deferredRoleIds.push(roleId);
+    const remainingMs = intervalMs - elapsedMs;
+    nextDueDelayMs = nextDueDelayMs === undefined ? remainingMs : Math.min(nextDueDelayMs, remainingMs);
+  }
+
+  return {
+    dueRoleIds,
+    deferredRoleIds,
+    ...(nextDueDelayMs !== undefined ? { nextDueDelayMs } : {}),
   };
 }
 

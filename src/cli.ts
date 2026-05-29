@@ -102,6 +102,7 @@ program
               ...promptContext,
               ...gitContext.promptContext,
             },
+            modelRoutingPurpose: "ask",
           });
 
           return {

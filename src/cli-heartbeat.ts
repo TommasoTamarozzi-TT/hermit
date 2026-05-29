@@ -16,10 +16,12 @@ import {
   type HeartbeatDaemonController,
   formatHeartbeatDaemonDuration,
   planHeartbeatDaemonCycle,
+  resolveDueHeartbeatRoles,
   resolveHeartbeatDaemonDelay,
   runHeartbeatCycle,
 } from "./heartbeat-daemon.js";
 import { listRoleIds, loadRole } from "./roles.js";
+import { resolveHeartbeatSchedule } from "./runtime-config.js";
 import {
   DEFAULT_HEARTBEAT_PROMPT,
   HERMIT_STRATEGIC_REVIEW_PROMPT,
@@ -32,6 +34,31 @@ import type { RoleDefinition } from "./types.js";
 import { ensureWorkspaceScaffold } from "./workspace.js";
 
 const STRATEGIC_REVIEW_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const HEARTBEAT_STATE_FILE = path.join(".hermit", "heartbeat", "state.json");
+
+interface HeartbeatStateFile {
+  roleLastCompletedAtMs?: Record<string, number>;
+}
+
+async function loadHeartbeatState(root: string): Promise<HeartbeatStateFile> {
+  try {
+    const raw = await fs.readFile(path.join(root, HEARTBEAT_STATE_FILE), "utf8");
+    const parsed = JSON.parse(raw) as HeartbeatStateFile;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+    if (code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
+async function saveHeartbeatState(root: string, state: HeartbeatStateFile): Promise<void> {
+  const filePath = path.join(root, HEARTBEAT_STATE_FILE);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(state, null, 2) + "\n", "utf8");
+}
 
 async function isStrategicReviewDueForRecord(recordPath: string): Promise<boolean> {
   try {
@@ -177,6 +204,7 @@ async function runStrategicReviewForHermit(options: {
           ...buildHermitPromptContext(options.root),
           ...gitContext.promptContext,
         },
+        modelRoutingPurpose: "strategic-review",
       });
 
       return {
@@ -325,13 +353,26 @@ export async function runHeartbeatDaemonLoop(options: {
         roles.push(role);
       }
       const strategicReviewSweepDue = await shouldRunStrategicReviewSweep(options.root, roles);
-      const cyclePlan = planHeartbeatDaemonCycle(roleIds, strategicReviewSweepDue);
+      const heartbeatSchedule = await resolveHeartbeatSchedule(options.root);
+      const heartbeatState = await loadHeartbeatState(options.root);
+      const dueHeartbeatRoles = resolveDueHeartbeatRoles({
+        roleIds,
+        defaultIntervalMs: options.intervalMs,
+        roleIntervalsMs: heartbeatSchedule.roleIntervalsMs,
+        lastCompletedAtMsByRoleId: heartbeatState.roleLastCompletedAtMs,
+      });
+      const cyclePlan = planHeartbeatDaemonCycle(
+        strategicReviewSweepDue ? roleIds : dueHeartbeatRoles.dueRoleIds,
+        strategicReviewSweepDue,
+      );
       const cycleLabel = cyclePlan.mode === "strategic-review" ? "strategic review" : "heartbeat";
 
       if (cyclePlan.mode === "wait") {
-        const waitLabel = firstCycle
-          ? "No roles are configured. Monitoring Hermit strategic review only."
-          : "No roles are currently configured. Monitoring Hermit strategic review only.";
+        const waitLabel = roleIds.length === 0
+          ? firstCycle
+            ? "No roles are configured. Monitoring Hermit strategic review only."
+            : "No roles are currently configured. Monitoring Hermit strategic review only."
+          : `No roles are due for heartbeat right now. Deferred by schedule: ${dueHeartbeatRoles.deferredRoleIds.join(", ")}.`;
         firstCycle = false;
         logInfo(
           `[${formatDaemonTimestamp()}] ${waitLabel} Waiting ${formatHeartbeatDaemonDuration(options.intervalMs)} before checking again.`,
@@ -341,14 +382,20 @@ export async function runHeartbeatDaemonLoop(options: {
       }
 
       firstCycle = false;
+      if (!strategicReviewSweepDue && dueHeartbeatRoles.deferredRoleIds.length > 0) {
+        logInfo(
+          `[${formatDaemonTimestamp()}] Deferred by heartbeat schedule this cycle: ${dueHeartbeatRoles.deferredRoleIds.join(", ")}.`,
+        );
+      }
       logInfo(
         cyclePlan.mode === "strategic-review" && roleIds.length === 0
           ? `[${formatDaemonTimestamp()}] Starting Hermit strategic-review sweep with no configured roles.`
           : cyclePlan.mode === "strategic-review"
           ? `[${formatDaemonTimestamp()}] Starting combined strategic-review sweep for Hermit plus ${roleIds.length} role(s): ${roleIds.join(", ")}.`
-          : `[${formatDaemonTimestamp()}] Starting heartbeat cycle for ${roleIds.length} role(s): ${roleIds.join(", ")}.`,
+          : `[${formatDaemonTimestamp()}] Starting heartbeat cycle for ${cyclePlan.targetIds.length} due role(s): ${cyclePlan.targetIds.join(", ")}.`,
       );
 
+      const completedRoleIdsForState = new Set<string>();
       const cycle = await runHeartbeatCycle({
         roleIds: cyclePlan.targetIds,
         isCancelled: () => !daemonController.isRunning(),
@@ -410,6 +457,7 @@ export async function runHeartbeatDaemonLoop(options: {
               ? `[${formatDaemonTimestamp()}] Finished strategic review for ${roleId}.`
               : `[${formatDaemonTimestamp()}] Finished heartbeat for ${roleId}.`,
           );
+          completedRoleIdsForState.add(roleId);
           return "success";
         },
       });
@@ -426,6 +474,18 @@ export async function runHeartbeatDaemonLoop(options: {
         logError(
           `[${formatDaemonTimestamp()}] ${targetLabel} failed: ${getErrorMessage(failure.error)}`,
         );
+      }
+
+      if (completedRoleIdsForState.size > 0) {
+        const nextState = {
+          roleLastCompletedAtMs: {
+            ...(heartbeatState.roleLastCompletedAtMs ?? {}),
+          },
+        };
+        for (const roleId of completedRoleIdsForState) {
+          nextState.roleLastCompletedAtMs[roleId] = cycle.completedAtMs;
+        }
+        await saveHeartbeatState(options.root, nextState);
       }
 
       if (!daemonController.isRunning()) {

@@ -13,6 +13,7 @@ import path from "node:path";
 import { createCustomTools, createHermitTools } from "./agent-tools.js";
 import { DEFAULT_THINKING_LEVEL, HERMIT_ROLE_ID, HERMIT_ROLE_ROOT } from "./constants.js";
 import { resolveConfiguredModel } from "./model-auth.js";
+import { resolveSessionModelPreferences, type ModelRoutingPurpose } from "./runtime-config.js";
 import { normalizeProviderEnvironment } from "./provider-env.js";
 import { PromptLibrary } from "./prompt-library.js";
 import { resolveCommonAncestor, resolveFrameworkRoot, resolveSharedSkillDirectories, uniquePaths } from "./runtime-paths.js";
@@ -68,6 +69,7 @@ interface BaseSessionOptions {
   telemetryCommandName?: string;
   telemetryContext?: Partial<TelemetrySessionContext>;
   onRoleSwitchRequest?: (request: RoleSwitchRequest) => void;
+  modelRoutingPurpose?: ModelRoutingPurpose;
 }
 
 interface RoleSessionOptions extends BaseSessionOptions {
@@ -167,6 +169,7 @@ async function createSession(options: SessionOptions): Promise<{
 }> {
   const prepared = await prepareSession(options);
   const { session, telemetry, modelLabel } = await createSessionCore({
+    root: options.root,
     executionRoot: prepared.executionRoot,
     systemPrompt: prepared.systemPrompt,
     skillPaths: prepared.skillPaths,
@@ -175,6 +178,7 @@ async function createSession(options: SessionOptions): Promise<{
     continueRecent: options.continueRecent,
     customTools: prepared.customTools,
     telemetryContext: buildTelemetryContext(options, prepared.roleId),
+    ...(options.modelRoutingPurpose ? { modelRoutingPurpose: options.modelRoutingPurpose } : {}),
   });
 
   return {
@@ -206,6 +210,7 @@ function enrichPromptContextWithCurrentTime(promptContext: PromptContext): Promp
 }
 
 interface SessionCoreOptions {
+  root: string;
   executionRoot: string;
   systemPrompt: string;
   skillPaths: string[];
@@ -214,6 +219,7 @@ interface SessionCoreOptions {
   continueRecent?: boolean | undefined;
   customTools: ToolDefinition<any>[];
   telemetryContext: Omit<TelemetrySessionContext, "modelProvider" | "modelId">;
+  modelRoutingPurpose?: ModelRoutingPurpose;
 }
 
 async function createSessionCore(options: SessionCoreOptions): Promise<{
@@ -234,7 +240,15 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
   normalizeProviderEnvironment();
   const authStorage = AuthStorage.create();
   const modelRegistry = new ModelRegistry(authStorage);
-  const { model } = resolveConfiguredModel(authStorage, modelRegistry);
+  const configuredPreferences = options.modelRoutingPurpose
+    ? await resolveSessionModelPreferences(options.root, options.modelRoutingPurpose)
+    : undefined;
+  const { model } = resolveConfiguredModel(
+    authStorage,
+    modelRegistry,
+    configuredPreferences?.preferredModel,
+    configuredPreferences?.fallbackModels,
+  );
 
   const sessionManager = !options.persist
     ? SessionManager.inMemory(options.executionRoot)

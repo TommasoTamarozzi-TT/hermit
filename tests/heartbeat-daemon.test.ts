@@ -5,6 +5,7 @@ import {
   formatHeartbeatDaemonDuration,
   parseHeartbeatDaemonInterval,
   planHeartbeatDaemonCycle,
+  resolveDueHeartbeatRoles,
   resolveHeartbeatDaemonDelay,
   resolveHeartbeatDaemonTargetIds,
   runHeartbeatCycle,
@@ -70,6 +71,36 @@ describe("planHeartbeatDaemonCycle", () => {
     expect(planHeartbeatDaemonCycle(["role-a", "role-b"], false)).toEqual({
       mode: "heartbeat",
       targetIds: ["role-a", "role-b"],
+    });
+  });
+});
+
+describe("resolveDueHeartbeatRoles", () => {
+  it("marks roles with no prior completion as due", () => {
+    expect(resolveDueHeartbeatRoles({
+      roleIds: ["role-a", "role-b"],
+      defaultIntervalMs: 60_000,
+      nowMs: 120_000,
+    })).toEqual({
+      dueRoleIds: ["role-a", "role-b"],
+      deferredRoleIds: [],
+    });
+  });
+
+  it("defers roles until their configured role interval expires", () => {
+    expect(resolveDueHeartbeatRoles({
+      roleIds: ["role-a", "role-b"],
+      defaultIntervalMs: 60_000,
+      roleIntervalsMs: { "role-b": 6 * 60 * 60 * 1000 },
+      lastCompletedAtMsByRoleId: {
+        "role-a": 30_000,
+        "role-b": 30_000,
+      },
+      nowMs: 120_000,
+    })).toEqual({
+      dueRoleIds: ["role-a"],
+      deferredRoleIds: ["role-b"],
+      nextDueDelayMs: 6 * 60 * 60 * 1000 - 90_000,
     });
   });
 });

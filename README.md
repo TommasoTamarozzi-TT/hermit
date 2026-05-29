@@ -191,7 +191,43 @@ The bootstrap prompt establishes `entities/user/record.md` as the shared user-co
 |---|---|
 | `ROLE_AGENT_MODEL` | Optional model override. If unset, Hermit auto-selects the best available configured model. |
 | `ROLE_AGENT_FALLBACK_MODELS` | Optional comma-separated fallback models in preference order when `ROLE_AGENT_MODEL` is pinned. |
+| `ROLE_AGENT_TIER` | Optional tier alias (`free`, `cheap`, `workhorse`, `heavy`) when you want named routing instead of a raw model ID. |
+| `ROLE_HEARTBEAT_MODEL` / `ROLE_HEARTBEAT_FALLBACK_MODELS` | Optional heartbeat-only model override and fallback list. |
+| `ROLE_HEARTBEAT_TIER` | Optional heartbeat-only tier alias. |
+| `ROLE_ASK_MODEL` / `ROLE_ASK_FALLBACK_MODELS` | Optional one-shot `ask` override and fallback list. |
+| `ROLE_ASK_TIER` | Optional one-shot `ask` tier alias. |
+| `ROLE_STRATEGIC_REVIEW_MODEL` / `ROLE_STRATEGIC_REVIEW_FALLBACK_MODELS` | Optional strategic-review-only override and fallback list. |
+| `ROLE_STRATEGIC_REVIEW_TIER` | Optional strategic-review-only tier alias. |
 | `ROLE_AGENT_THINKING_LEVEL` | Thinking level (default: `medium`) |
+
+Hermit also supports workspace-local routing defaults in `workspace/.hermit/runtime.json`. That file can pin a named tier per session type and can throttle heartbeat cadence per role without changing framework code. Example:
+
+```json
+{
+  "modelRouting": {
+    "defaults": {
+      "interactive": "workhorse",
+      "ask": "workhorse",
+      "heartbeat": "workhorse",
+      "strategic-review": "heavy"
+    }
+  },
+  "heartbeat": {
+    "roleIntervals": {
+      "secretary": "1h",
+      "sales-representative": "1h",
+      "business-analyst": "6h"
+    }
+  }
+}
+```
+
+Built-in tiers map to these model preferences unless you override them in that same file:
+
+- `free` → `local/gemma4` with fallback `openai/gpt-4.1-mini`
+- `cheap` → `openai/gpt-4.1-mini` with fallback `openai/gpt-5-mini`
+- `workhorse` → `openai/gpt-5-mini` with fallback `openai/gpt-4.1-mini`
+- `heavy` → `openai/gpt-5.4` with fallback `openai/gpt-5-mini`
 
 Common provider API key env vars and matching macOS Keychain accounts:
 

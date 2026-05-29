@@ -313,6 +313,7 @@ async function buildInteractiveChatSession(
             ...gitContext.promptContext,
           },
           onRoleSwitchRequest,
+          modelRoutingPurpose: "interactive",
         })
       : await createRoleSession({
           root: target.root,
