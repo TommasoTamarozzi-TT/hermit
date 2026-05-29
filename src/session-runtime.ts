@@ -222,21 +222,23 @@ interface SessionCoreOptions {
   modelRoutingPurpose?: ModelRoutingPurpose;
 }
 
+export function appendLiveModelContext(systemPrompt: string, modelLabel: string, modelRoutingPurpose?: ModelRoutingPurpose): string {
+  const purposeLabel = modelRoutingPurpose ?? "unspecified";
+  const contextBlock = [
+    "# Live Runtime Context",
+    `- Current session model: ${modelLabel}`,
+    `- Current session routing purpose: ${purposeLabel}`,
+    "- Treat this as authoritative runtime metadata, not something you inferred.",
+  ].join("\n");
+
+  return `${systemPrompt.trimEnd()}\n\n${contextBlock}`;
+}
+
 async function createSessionCore(options: SessionCoreOptions): Promise<{
   session: AgentSession;
   telemetry: TelemetryRecorder;
   modelLabel: string;
 }> {
-  const loader = new DefaultResourceLoader({
-    cwd: options.executionRoot,
-    noExtensions: true,
-    additionalSkillPaths: options.skillPaths,
-    noPromptTemplates: true,
-    noThemes: true,
-    appendSystemPromptOverride: (base) => [...base, options.systemPrompt],
-  });
-  await loader.reload();
-
   normalizeProviderEnvironment();
   const authStorage = AuthStorage.create();
   const modelRegistry = new ModelRegistry(authStorage);
@@ -249,6 +251,20 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
     configuredPreferences?.preferredModel,
     configuredPreferences?.fallbackModels,
   );
+  const modelLabel = `${model.provider}/${model.id}`;
+
+  const loader = new DefaultResourceLoader({
+    cwd: options.executionRoot,
+    noExtensions: true,
+    additionalSkillPaths: options.skillPaths,
+    noPromptTemplates: true,
+    noThemes: true,
+    appendSystemPromptOverride: (base) => [
+      ...base,
+      appendLiveModelContext(options.systemPrompt, modelLabel, options.modelRoutingPurpose),
+    ],
+  });
+  await loader.reload();
 
   const sessionManager = !options.persist
     ? SessionManager.inMemory(options.executionRoot)
@@ -275,28 +291,6 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
   });
 
   return { session, telemetry, modelLabel };
-}
-
-export async function createRoleSession(options: RoleSessionOptions): Promise<{
-  session: AgentSession;
-  promptLibrary: PromptLibrary;
-  workspaceState: WorkspaceInitializationState;
-  telemetry: TelemetryRecorder;
-  modelLabel: string;
-}> {
-  return createSession({ kind: "role", ...options });
-}
-
-export async function createHermitSession(options: HermitSessionOptions): Promise<{
-  session: AgentSession;
-  promptLibrary: PromptLibrary;
-  workspaceState: WorkspaceInitializationState;
-  telemetry: TelemetryRecorder;
-  modelLabel: string;
-}> {
-  return createSession({ kind: "hermit", ...options });
-}
-eturn { session, telemetry, modelLabel: `${model.provider}/${model.id}` };
 }
 
 export async function createRoleSession(options: RoleSessionOptions): Promise<{
