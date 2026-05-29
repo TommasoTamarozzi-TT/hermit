@@ -151,6 +151,7 @@ export async function runHeartbeatForRole(options: {
           ...options.promptContext,
           ...gitContext.promptContext,
         },
+        modelRoutingPurpose: "heartbeat",
       });
 
       return {
