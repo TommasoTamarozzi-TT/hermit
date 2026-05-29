@@ -21,7 +21,7 @@ import {
   runHeartbeatCycle,
 } from "./heartbeat-daemon.js";
 import { listRoleIds, loadRole } from "./roles.js";
-import { resolveHeartbeatSchedule } from "./runtime-config.js";
+import { resolveHeartbeatSchedule, loadRuntimeConfig } from "./runtime-config.js";
 import {
   DEFAULT_HEARTBEAT_PROMPT,
   HERMIT_STRATEGIC_REVIEW_PROMPT,
@@ -333,6 +333,23 @@ export async function runHeartbeatDaemonLoop(options: {
     logInfo(
       `[${formatDaemonTimestamp()}] Heartbeat daemon started. Running role heartbeats every ${formatHeartbeatDaemonDuration(options.intervalMs)} and a combined daily strategic-review sweep when due.${options.initialDelayMs !== undefined ? ` First cycle in ${formatHeartbeatDaemonDuration(options.initialDelayMs)}.` : ""}`,
     );
+
+    // Ensure purpose-specific heartbeat routing from workspace runtime config is visible to
+    // any child processes or internal resolution that rely on env vars. If the workspace
+    // runtime.json defines a default tier for `heartbeat` and no purpose-specific env
+    // override exists, export it to process.env so background turns do not fall back to
+    // the generic interactive model.
+    try {
+      const runtimeCfg = await loadRuntimeConfig(options.root);
+      const configuredHeartbeatTier = runtimeCfg.modelRouting?.defaults?.heartbeat;
+      if (configuredHeartbeatTier && !process.env.ROLE_HEARTBEAT_MODEL && !process.env.ROLE_HEARTBEAT_TIER) {
+        process.env.ROLE_HEARTBEAT_TIER = configuredHeartbeatTier;
+        logInfo(`[${formatDaemonTimestamp()}] Applied runtime-config heartbeat tier override: ROLE_HEARTBEAT_TIER=${configuredHeartbeatTier}`);
+      }
+    } catch (err) {
+      // Non-fatal: if runtime config cannot be read, continue with existing environment.
+      logInfo(`[${formatDaemonTimestamp()}] Warning: failed to read runtime config for heartbeat routing: ${String(err)}`);
+    }
 
     while (daemonController.isRunning()) {
       if (options.initialDelayMs !== undefined && firstCycle) {
