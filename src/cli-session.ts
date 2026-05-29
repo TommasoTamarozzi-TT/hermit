@@ -327,6 +327,7 @@ async function buildInteractiveChatSession(
             ...gitContext.promptContext,
           },
           onRoleSwitchRequest,
+          modelRoutingPurpose: "interactive",
         });
 
   return {

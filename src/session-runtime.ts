@@ -274,7 +274,29 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
     modelId: model.id,
   });
 
-  return { session, telemetry, modelLabel: `${model.provider}/${model.id}` };
+  return { session, telemetry, modelLabel };
+}
+
+export async function createRoleSession(options: RoleSessionOptions): Promise<{
+  session: AgentSession;
+  promptLibrary: PromptLibrary;
+  workspaceState: WorkspaceInitializationState;
+  telemetry: TelemetryRecorder;
+  modelLabel: string;
+}> {
+  return createSession({ kind: "role", ...options });
+}
+
+export async function createHermitSession(options: HermitSessionOptions): Promise<{
+  session: AgentSession;
+  promptLibrary: PromptLibrary;
+  workspaceState: WorkspaceInitializationState;
+  telemetry: TelemetryRecorder;
+  modelLabel: string;
+}> {
+  return createSession({ kind: "hermit", ...options });
+}
+eturn { session, telemetry, modelLabel: `${model.provider}/${model.id}` };
 }
 
 export async function createRoleSession(options: RoleSessionOptions): Promise<{
