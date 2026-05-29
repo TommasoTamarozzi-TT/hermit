@@ -359,7 +359,9 @@ export async function runHeartbeatDaemonLoop(options: {
         roleIds,
         defaultIntervalMs: options.intervalMs,
         roleIntervalsMs: heartbeatSchedule.roleIntervalsMs,
-        lastCompletedAtMsByRoleId: heartbeatState.roleLastCompletedAtMs,
+        ...(heartbeatState.roleLastCompletedAtMs
+          ? { lastCompletedAtMsByRoleId: heartbeatState.roleLastCompletedAtMs }
+          : {}),
       });
       const cyclePlan = planHeartbeatDaemonCycle(
         strategicReviewSweepDue ? roleIds : dueHeartbeatRoles.dueRoleIds,

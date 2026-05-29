@@ -116,16 +116,38 @@ async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
   const nextActionsMatch = raw.match(/## Next Actions\s+([\s\S]*?)\n## /);
   const nextActionsBlock = nextActionsMatch?.[1] ?? "";
   const tasks: TodoTaskInput[] = [];
+  let currentPriority: TodoPriority | null = null;
 
   for (const line of nextActionsBlock.split("\n")) {
-    const bullet = line.trim();
-    if (!bullet.startsWith("- ")) {
+    const trimmed = line.trim();
+    if (!trimmed) {
       continue;
     }
 
-    const content = bullet.slice(2).trim();
+    if (/^High priority$/i.test(trimmed)) {
+      currentPriority = "high";
+      continue;
+    }
+    if (/^Medium priority$/i.test(trimmed)) {
+      currentPriority = "medium";
+      continue;
+    }
+    if (/^Low priority$/i.test(trimmed)) {
+      currentPriority = "low";
+      continue;
+    }
+    if (/^Priority not yet set$/i.test(trimmed)) {
+      currentPriority = "needs-triage";
+      continue;
+    }
 
-    let priority: TodoPriority | null = null;
+    if (!trimmed.startsWith("- ")) {
+      continue;
+    }
+
+    const content = trimmed.slice(2).trim();
+
+    let priority: TodoPriority | null = currentPriority;
     let label = "";
 
     const highMatch = content.match(/^High priority:\s*(.+)$/i);
@@ -145,6 +167,8 @@ async function loadSecretaryTodoTasks(): Promise<TodoTaskInput[]> {
     } else if (triageMatch) {
       priority = "needs-triage";
       label = cleanTaskLabel(triageMatch[1]);
+    } else {
+      label = cleanTaskLabel(content);
     }
 
     if (!priority || !label) {
