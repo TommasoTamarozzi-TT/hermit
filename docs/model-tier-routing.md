@@ -63,7 +63,9 @@ You can also override routing through env vars when needed:
 - ask-only: `ROLE_ASK_MODEL`, `ROLE_ASK_FALLBACK_MODELS`, `ROLE_ASK_TIER`
 - strategic-review-only: `ROLE_STRATEGIC_REVIEW_MODEL`, `ROLE_STRATEGIC_REVIEW_FALLBACK_MODELS`, `ROLE_STRATEGIC_REVIEW_TIER`
 
-Explicit env model settings win over tier defaults.
+Purpose-specific env model settings win over tier defaults.
+
+For non-interactive routed work such as `ask`, `heartbeat`, and `strategic-review`, workspace runtime routing now takes precedence over the generic `ROLE_AGENT_*` model pin. That prevents a live interactive model pin from accidentally forcing all background work onto the same expensive model. The generic `ROLE_AGENT_*` env vars still act as the interactive default and as a fallback when no purpose-specific routing is configured.
 
 ## Heartbeat scheduling
 

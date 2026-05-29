@@ -105,43 +105,78 @@ export async function resolveSessionModelPreferences(
   purpose: ModelRoutingPurpose,
 ): Promise<ResolvedSessionModelPreferences | undefined> {
   const purposeSegment = purposeToEnvSegment(purpose);
-  const explicitModel = (process.env[`ROLE_${purposeSegment}_MODEL`] ?? process.env.ROLE_AGENT_MODEL ?? "").trim();
-  const explicitFallbackModels = parseStringList(
-    process.env[`ROLE_${purposeSegment}_FALLBACK_MODELS`] ?? process.env.ROLE_AGENT_FALLBACK_MODELS,
-  );
+  const purposeModel = (process.env[`ROLE_${purposeSegment}_MODEL`] ?? "").trim();
+  const purposeFallbackModels = parseStringList(process.env[`ROLE_${purposeSegment}_FALLBACK_MODELS`]);
 
-  if (explicitModel || explicitFallbackModels.length > 0) {
+  if (purposeModel || purposeFallbackModels.length > 0) {
     return {
-      ...(explicitModel ? { preferredModel: explicitModel } : {}),
-      fallbackModels: explicitFallbackModels,
+      ...(purposeModel ? { preferredModel: purposeModel } : {}),
+      fallbackModels: purposeFallbackModels,
       source: "env-model",
     };
   }
 
-  const explicitTier = (process.env[`ROLE_${purposeSegment}_TIER`] ?? process.env.ROLE_AGENT_TIER ?? "").trim();
-  if (isModelTierId(explicitTier)) {
-    const tierPreferences = resolveTierPreferences({}, explicitTier);
+  const purposeTier = (process.env[`ROLE_${purposeSegment}_TIER`] ?? "").trim();
+  if (isModelTierId(purposeTier)) {
+    const tierPreferences = resolveTierPreferences({}, purposeTier);
     return {
       preferredModel: tierPreferences.model,
       fallbackModels: tierPreferences.fallbacks,
-      tierId: explicitTier,
+      tierId: purposeTier,
       source: "env-tier",
     };
   }
 
-  const runtimeConfig = await loadRuntimeConfig(root);
-  const configuredTier = runtimeConfig.modelRouting?.defaults?.[purpose];
-  if (!configuredTier || !isModelTierId(configuredTier)) {
-    return undefined;
+  if (purpose !== "interactive") {
+    const runtimeConfig = await loadRuntimeConfig(root);
+    const configuredTier = runtimeConfig.modelRouting?.defaults?.[purpose];
+    if (configuredTier && isModelTierId(configuredTier)) {
+      const tierPreferences = resolveTierPreferences(runtimeConfig, configuredTier);
+      return {
+        preferredModel: tierPreferences.model,
+        fallbackModels: tierPreferences.fallbacks,
+        tierId: configuredTier,
+        source: "runtime-config",
+      };
+    }
   }
 
-  const tierPreferences = resolveTierPreferences(runtimeConfig, configuredTier);
-  return {
-    preferredModel: tierPreferences.model,
-    fallbackModels: tierPreferences.fallbacks,
-    tierId: configuredTier,
-    source: "runtime-config",
-  };
+  const genericModel = (process.env.ROLE_AGENT_MODEL ?? "").trim();
+  const genericFallbackModels = parseStringList(process.env.ROLE_AGENT_FALLBACK_MODELS);
+  if (genericModel || genericFallbackModels.length > 0) {
+    return {
+      ...(genericModel ? { preferredModel: genericModel } : {}),
+      fallbackModels: genericFallbackModels,
+      source: "env-model",
+    };
+  }
+
+  const genericTier = (process.env.ROLE_AGENT_TIER ?? "").trim();
+  if (isModelTierId(genericTier)) {
+    const tierPreferences = resolveTierPreferences({}, genericTier);
+    return {
+      preferredModel: tierPreferences.model,
+      fallbackModels: tierPreferences.fallbacks,
+      tierId: genericTier,
+      source: "env-tier",
+    };
+  }
+
+  if (purpose === "interactive") {
+    const runtimeConfig = await loadRuntimeConfig(root);
+    const configuredTier = runtimeConfig.modelRouting?.defaults?.[purpose];
+    if (configuredTier && isModelTierId(configuredTier)) {
+      const tierPreferences = resolveTierPreferences(runtimeConfig, configuredTier);
+      return {
+        preferredModel: tierPreferences.model,
+        fallbackModels: tierPreferences.fallbacks,
+        tierId: configuredTier,
+        source: "runtime-config",
+      };
+    }
+  }
+
+  return undefined;
 }
 
 export async function resolveHeartbeatSchedule(

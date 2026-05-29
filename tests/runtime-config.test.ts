@@ -53,7 +53,7 @@ describe("runtime-config", () => {
     });
   });
 
-  it("prefers env model overrides over workspace runtime tiers", async () => {
+  it("prefers purpose-specific env model overrides over workspace runtime tiers", async () => {
     const root = makeWorkspaceRoot();
     mkdirSync(path.join(root, ".hermit"), { recursive: true });
     writeFileSync(
@@ -73,6 +73,39 @@ describe("runtime-config", () => {
     await expect(resolveSessionModelPreferences(root, "heartbeat")).resolves.toEqual({
       preferredModel: "openai/gpt-4.1-mini",
       fallbackModels: ["openai/gpt-5-mini"],
+      source: "env-model",
+    });
+  });
+
+  it("does not let the generic interactive model override heartbeat runtime routing", async () => {
+    const root = makeWorkspaceRoot();
+    mkdirSync(path.join(root, ".hermit"), { recursive: true });
+    writeFileSync(
+      path.join(root, ".hermit", "runtime.json"),
+      JSON.stringify({
+        modelRouting: {
+          defaults: {
+            interactive: "workhorse",
+            heartbeat: "free",
+          },
+        },
+      }),
+    );
+
+    vi.stubEnv("ROLE_AGENT_MODEL", "openai/gpt-5.4");
+    vi.stubEnv("ROLE_AGENT_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_AGENT_TIER", "");
+
+    await expect(resolveSessionModelPreferences(root, "heartbeat")).resolves.toEqual({
+      preferredModel: "local/gemma4",
+      fallbackModels: ["openai/gpt-4.1-mini"],
+      tierId: "free",
+      source: "runtime-config",
+    });
+
+    await expect(resolveSessionModelPreferences(root, "interactive")).resolves.toEqual({
+      preferredModel: "openai/gpt-5.4",
+      fallbackModels: [],
       source: "env-model",
     });
   });
