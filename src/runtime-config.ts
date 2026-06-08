@@ -127,6 +127,21 @@ export async function resolveSessionModelPreferences(
     };
   }
 
+  // Allow a workspace-local override file at .hermit/config.json with a model override per purpose.
+  try {
+    const localConfigPath = resolveRuntimeConfigPath(root).replace(/runtime.json$/, "config.json");
+    const raw = await fs.readFile(localConfigPath, "utf8");
+    const parsed = JSON.parse(raw) as { modelOverrides?: Record<string, string> } | undefined;
+    if (parsed && parsed.modelOverrides && typeof parsed.modelOverrides[purpose] === "string") {
+      const model = parsed.modelOverrides[purpose].trim();
+      if (model.length > 0) {
+        return { preferredModel: model, fallbackModels: [], source: "runtime-config" };
+      }
+    }
+  } catch {
+    // ignore if no local config exists
+  }
+
   if (purpose !== "interactive") {
     const runtimeConfig = await loadRuntimeConfig(root);
     const configuredTier = runtimeConfig.modelRouting?.defaults?.[purpose];

@@ -243,6 +243,8 @@ function buildConversationEntries(entries: SessionEntry[]): ConversationTimeline
     if (role === "assistant") {
       const text = extractTextContent(message.content);
       const toolCalls = extractToolCalls(message.content);
+      const provider = (entry as any).message?.provider;
+      const model = (entry as any).message?.model;
       timeline.push({
         kind: "assistant",
         timestamp: entry.timestamp,
@@ -250,6 +252,7 @@ function buildConversationEntries(entries: SessionEntry[]): ConversationTimeline
         text,
         preview: summarizeText(text || (toolCalls.length > 0 ? `Called ${toolCalls.length} tool${toolCalls.length === 1 ? "" : "s"}.` : "")),
         toolCalls,
+        assistantModel: provider && model ? `${provider}/${model}` : undefined,
       });
       continue;
     }
