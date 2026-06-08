@@ -116,6 +116,42 @@ describe("runtime-config", () => {
     });
   });
 
+  it("uses workspace-local config model overrides before runtime tier defaults", async () => {
+    const root = makeWorkspaceRoot();
+    mkdirSync(path.join(root, ".hermit"), { recursive: true });
+    writeFileSync(
+      path.join(root, ".hermit", "runtime.json"),
+      JSON.stringify({
+        modelRouting: {
+          defaults: {
+            heartbeat: "free",
+          },
+        },
+      }),
+    );
+    writeFileSync(
+      path.join(root, ".hermit", "config.json"),
+      JSON.stringify({
+        modelOverrides: {
+          heartbeat: "openai/gpt-5.1-mini",
+        },
+      }),
+    );
+
+    vi.stubEnv("ROLE_AGENT_MODEL", "");
+    vi.stubEnv("ROLE_AGENT_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_AGENT_TIER", "");
+    vi.stubEnv("ROLE_HEARTBEAT_MODEL", "");
+    vi.stubEnv("ROLE_HEARTBEAT_FALLBACK_MODELS", "");
+    vi.stubEnv("ROLE_HEARTBEAT_TIER", "");
+
+    await expect(resolveSessionModelPreferences(root, "heartbeat")).resolves.toEqual({
+      preferredModel: "openai/gpt-5.1-mini",
+      fallbackModels: [],
+      source: "runtime-config",
+    });
+  });
+
   it("parses heartbeat role intervals from runtime config", async () => {
     const root = makeWorkspaceRoot();
     mkdirSync(path.join(root, ".hermit"), { recursive: true });

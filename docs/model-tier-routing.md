@@ -56,6 +56,20 @@ Supported routing purposes:
 - `heartbeat`
 - `strategic-review`
 
+You can also pin one workspace purpose directly in `.hermit/config.json` when you want a hard local override without changing the tier map.
+
+Example:
+
+```json
+{
+  "modelOverrides": {
+    "heartbeat": "openai/gpt-5.1-mini"
+  }
+}
+```
+
+This workspace-local override is checked before `workspace/.hermit/runtime.json` tier defaults and before generic `ROLE_AGENT_*` env defaults, but after purpose-specific env overrides such as `ROLE_HEARTBEAT_MODEL` or `ROLE_HEARTBEAT_TIER`.
+
 You can also override routing through env vars when needed:
 
 - generic: `ROLE_AGENT_MODEL`, `ROLE_AGENT_FALLBACK_MODELS`, `ROLE_AGENT_TIER`
