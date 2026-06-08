@@ -75,6 +75,7 @@ export interface ConversationTimelineEntry {
   label: string;
   text?: string;
   preview?: string;
+  assistantModel?: string;
   toolCalls?: Array<{ name: string; argumentsText?: string }>;
   toolName?: string;
   detailsText?: string;
