@@ -47,6 +47,8 @@ coverage/
 # Hermit runtime artifacts
 .hermit/
 /workspace/
+!/workspace/agents/business-analyst/agent/record.md
+
 
 # Cursor / plan artifacts (optional; remove if you want to track plans)
 .cursor/plans/
