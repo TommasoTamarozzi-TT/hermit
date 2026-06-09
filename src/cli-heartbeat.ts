@@ -450,19 +450,53 @@ export async function runHeartbeatDaemonLoop(options: {
               ? `[${formatDaemonTimestamp()}] Running strategic review for ${roleId}.`
               : `[${formatDaemonTimestamp()}] Running heartbeat for ${roleId}.`,
           );
-          const result = await runHeartbeatForRole({
-            root: options.root,
-            role,
-            promptContext: buildRolePromptContext(options.root, role),
-            ...(options.continueRecent !== undefined ? { continueRecent: options.continueRecent } : {}),
-            automaticStrategicReview: false,
-            ...(cyclePlan.mode === "strategic-review" ? { strategicReview: true } : {}),
-            ...(options.gitCheckpointsEnabled !== undefined ? { gitCheckpointsEnabled: options.gitCheckpointsEnabled } : {}),
-            isCancelled: () => !daemonController.isRunning(),
-            registerActiveAbort: (abortActiveSession) => daemonController.setActiveAbort(abortActiveSession),
-            ...(options.turnCoordinator ? { turnCoordinator: options.turnCoordinator } : {}),
-            ...(options.renderOptions ? { renderOptions: options.renderOptions } : {}),
-          });
+          // Enforce a per-role heartbeat timeout to avoid very long stuck turns.
+          // If the run exceeds ROLE_HEARTBEAT_TIMEOUT_MS, request abort of the active session.
+          const ROLE_HEARTBEAT_TIMEOUT_MS = 90_000; // 90s default, conservative guard
+          let timeoutHandle: NodeJS.Timeout | undefined;
+          try {
+            timeoutHandle = setTimeout(() => {
+              logError(
+                `[${formatDaemonTimestamp()}] Heartbeat for ${roleId} exceeded ${ROLE_HEARTBEAT_TIMEOUT_MS}ms — requesting abort.`,
+              );
+              // Request abort of the active heartbeat session. This triggers the registered abort handler if set.
+              daemonController.abortActiveSession();
+            }, ROLE_HEARTBEAT_TIMEOUT_MS);
+
+            const result = await runHeartbeatForRole({
+              root: options.root,
+              role,
+              promptContext: buildRolePromptContext(options.root, role),
+              ...(options.continueRecent !== undefined ? { continueRecent: options.continueRecent } : {}),
+              automaticStrategicReview: false,
+              ...(cyclePlan.mode === "strategic-review" ? { strategicReview: true } : {}),
+              ...(options.gitCheckpointsEnabled !== undefined ? { gitCheckpointsEnabled: options.gitCheckpointsEnabled } : {}),
+              isCancelled: () => !daemonController.isRunning(),
+              registerActiveAbort: (abortActiveSession) => daemonController.setActiveAbort(abortActiveSession),
+              ...(options.turnCoordinator ? { turnCoordinator: options.turnCoordinator } : {}),
+              ...(options.renderOptions ? { renderOptions: options.renderOptions } : {}),
+            });
+
+            if (result.status === "skipped") {
+              logInfo(
+                `[${formatDaemonTimestamp()}] ${formatSkippedHeartbeatMessage(
+                  strategicReviewSweepDue ? `strategic review for ${roleId}` : `heartbeat for ${roleId}`,
+                  result.activeTurnOwner,
+                )}`,
+              );
+              return "skipped";
+            }
+
+            logInfo(
+              strategicReviewSweepDue
+                ? `[${formatDaemonTimestamp()}] Finished strategic review for ${roleId}.`
+                : `[${formatDaemonTimestamp()}] Finished heartbeat for ${roleId}.`,
+            );
+            completedRoleIdsForState.add(roleId);
+            return "success";
+          } finally {
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+          }
           if (result.status === "skipped") {
             logInfo(
               `[${formatDaemonTimestamp()}] ${formatSkippedHeartbeatMessage(
