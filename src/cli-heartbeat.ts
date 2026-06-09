@@ -497,22 +497,6 @@ export async function runHeartbeatDaemonLoop(options: {
           } finally {
             if (timeoutHandle) clearTimeout(timeoutHandle);
           }
-          if (result.status === "skipped") {
-            logInfo(
-              `[${formatDaemonTimestamp()}] ${formatSkippedHeartbeatMessage(
-                strategicReviewSweepDue ? `strategic review for ${roleId}` : `heartbeat for ${roleId}`,
-                result.activeTurnOwner,
-              )}`,
-            );
-            return "skipped";
-          }
-          logInfo(
-            strategicReviewSweepDue
-              ? `[${formatDaemonTimestamp()}] Finished strategic review for ${roleId}.`
-              : `[${formatDaemonTimestamp()}] Finished heartbeat for ${roleId}.`,
-          );
-          completedRoleIdsForState.add(roleId);
-          return "success";
         },
       });
 
