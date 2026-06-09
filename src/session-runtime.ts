@@ -253,6 +253,29 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
   );
   const modelLabel = `${model.provider}/${model.id}`;
 
+  // Audit: if the resolved model is openai/gpt-5.4, record an explicit usage log so saved-session and doctor wrappers
+  // are always auditable. This complements scripts/run-strategic-review-guard.ts which already logs strategic-review runs.
+  try {
+    if (model.provider === 'openai' && model.id && model.id.includes('gpt-5.4')) {
+      // Use a best-effort, non-blocking child process call to the workspace logger script.
+      // It is important this never throws and never blocks main flow.
+      const { spawnSync } = await import('node:child_process');
+      const scriptPath = 'scripts/log-5.4-use.mjs';
+      const args = [scriptPath, '--model', `${model.provider}/${model.id}`, '--reason', 'session_create', '--command', options?.telemetryContext?.commandName || 'unknown'];
+      try {
+        spawnSync(process.execPath, args, { stdio: 'ignore', cwd: options.executionRoot || process.cwd(), timeout: 2000 });
+      } catch (e) {
+        // ignore logging failures, but surface a debug message
+        // eslint-disable-next-line no-console
+        console.error('Failed to spawn 5.4 usage logger (non-fatal):', e && e.message ? e.message : e);
+      }
+    }
+  } catch (e) {
+    // Keep session creation robust: never fail on logging.
+    // eslint-disable-next-line no-console
+    console.error('Error while attempting to audit model usage (non-fatal):', e && e.message ? e.message : e);
+  }
+
   const loader = new DefaultResourceLoader({
     cwd: options.executionRoot,
     noExtensions: true,
