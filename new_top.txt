@@ -1,0 +1,24 @@
+---
+last_strategic_review: 2026-06-09
+---
+- Date: 2026-06-09
+  - Evidence:
+    - `git status` and `.log` confirm `workspace/` is ignored by `.gitignore`, preventing tracking of `record.md`.
+    - `git log` shows no recent commits to the BA role.
+    - Telemetry report `report-7d-2026-06-08-2026-06-08T22-40-43-430Z.md` shows `bash` error rate is 7.6% and `rag_silent_turn_rate` is 96.0%.
+    - `inbox.md` contains active investigations for tool failures and silent turns.
+  - Hypothesis:
+    - The high `bash` error rate (7.6%) is likely due to specific command complexity or shell environment issues in the `nono` runtime.
+    - The persistent 96.0% silent turn rate is a direct consequence of the `bash` and `read` tool failures.
+    - The lack of git tracking for the agent's canonical record is a direct result of the `.gitignore` configuration.
+  - Test:
+    - Executed complex `bash` commands (piping, redirection); they succeeded, suggesting the error rate is not triggered by simple complexity.
+    - Attempt to add `workspace/agents/business-analyst/agent/record.md` to git; failed due to `.gitignore` rule.
+  - Re-evaluate hypothesis:
+    - `bash` errors are not triggered by simple complexity (test passed).
+    - Tracking risk is confirmed by `.gitignore` rule.
+  - Next decision:
+    - [User Review] Investigate `bash` tool error patterns further (perhaps looking at `p95` latency).
+    - [User Review] Modify `.gitignore` to allow tracking of `agents/business-analyst/agent/record.md`.
+
+
