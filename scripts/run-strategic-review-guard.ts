@@ -58,6 +58,15 @@ async function main() {
         ROLE_STRATEGIC_REVIEW_MODEL: allowed,
       },
     });
+    // log the 5.4 usage
+    try {
+      const logger = path.join(workspaceRoot, 'scripts', 'log-5.4-use.mjs');
+      const logCmd = `node "${logger}" --model "${allowed}" --reason "strategic-review-guard" --command "${cmd.replace(/"/g, '\\"')}"`;
+      execSync(logCmd, { stdio: 'inherit' });
+    } catch (e) {
+      console.error('Failed to write 5.4 usage log:', e.message || e);
+    }
+
     writeLastDate(today);
     console.log('Strategic review completed; recorded last 5.4 strategic review date:', today);
   } catch (err) {
