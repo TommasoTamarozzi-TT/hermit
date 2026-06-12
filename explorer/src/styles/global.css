@@ -34,7 +34,8 @@
     --color-shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
   }
 
-  html[data-theme="raidyn"] {
+  html[data-theme="raidyn"],
+  html[data-theme="raidyn-black"] {
     color-scheme: dark;
     --app-background: radial-gradient(circle at top, rgba(246, 98, 46, 0.15), transparent 42%), linear-gradient(to bottom, #15110f, #0c0a09);
     --color-body-bg: #100d0c;
@@ -63,6 +64,11 @@
     --color-code-bg: #1b1b1d;
     --color-pre-bg: #161617;
     --color-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+
+  html[data-theme="raidyn-black"] {
+    --app-background: #000000;
+    --color-body-bg: #000000;
   }
 
   html {

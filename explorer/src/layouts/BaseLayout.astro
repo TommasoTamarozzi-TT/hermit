@@ -27,7 +27,7 @@ const appName = "Raidyn Virtual Assistent - Explorer";
       (() => {
         const storageKey = "hermit-explorer-theme";
         const defaultTheme = "raidyn";
-        const allowedThemes = new Set(["light", "raidyn"]);
+        const allowedThemes = new Set(["light", "raidyn", "raidyn-black"]);
         try {
           const savedTheme = localStorage.getItem(storageKey) || defaultTheme;
           document.documentElement.dataset.theme = allowedThemes.has(savedTheme) ? savedTheme : defaultTheme;
@@ -52,6 +52,7 @@ const appName = "Raidyn Virtual Assistent - Explorer";
               <select id="theme-select" class="theme-select" data-theme-select>
                 <option value="light">Light</option>
                 <option value="raidyn">Raidyn</option>
+                <option value="raidyn-black">Raidyn Black</option>
               </select>
             </label>
 
