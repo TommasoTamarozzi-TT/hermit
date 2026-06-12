@@ -36,11 +36,11 @@
 
   html[data-theme="raidyn"] {
     color-scheme: dark;
-    --app-background: radial-gradient(circle at top, rgba(246, 98, 46, 0.16), transparent 40%), linear-gradient(to bottom, #0a0a0b, #050505);
-    --color-body-bg: #050505;
-    --color-surface: #131314;
-    --color-surface-muted: #1b1b1d;
-    --color-surface-subtle: rgba(27, 27, 29, 0.88);
+    --app-background: radial-gradient(circle at top, rgba(246, 98, 46, 0.15), transparent 42%), linear-gradient(to bottom, #15110f, #0c0a09);
+    --color-body-bg: #100d0c;
+    --color-surface: #18140f;
+    --color-surface-muted: #211c18;
+    --color-surface-subtle: rgba(33, 28, 24, 0.88);
     --color-border: rgba(120, 120, 124, 0.26);
     --color-border-strong: rgba(160, 160, 165, 0.38);
     --color-text: #ededee;
@@ -698,16 +698,16 @@
   }
 
   .action-button {
-    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold no-underline transition;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold no-underline transition;
     border: 1px solid var(--color-accent);
     background: var(--color-accent);
-    color: #1a0e02;
+    color: #ffffff;
   }
 
   .action-button:hover {
     border-color: var(--color-link-hover);
     background: var(--color-link-hover);
-    color: #1a0e02;
+    color: #ffffff;
     transform: translateY(-1px);
     box-shadow: 0 10px 24px color-mix(in srgb, var(--color-accent) 28%, transparent);
   }
