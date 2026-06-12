@@ -473,6 +473,23 @@ export async function runHeartbeatDaemonLoop(options: {
               logError(
                 `[${formatDaemonTimestamp()}] Heartbeat for ${roleId} exceeded ${ROLE_HEARTBEAT_TIMEOUT_MS}ms — requesting abort.`,
               );
+              // Produce a lightweight diagnostic snapshot for later triage.
+              try {
+                const diagDir = path.join(options.root, ".hermit", "diagnostics");
+                // synchronous write: this runs inside the daemon; keep it small and non-blocking.
+                fs.mkdirSync(diagDir, { recursive: true });
+                const snapshot = {
+                  timestamp: new Date().toISOString(),
+                  roleId,
+                  reason: "heartbeat_timeout",
+                  sessionPlan: cyclePlan.mode,
+                };
+                fs.writeFileSync(path.join(diagDir, `heartbeat-timeout-${roleId}-${Date.now()}.json`), JSON.stringify(snapshot, null, 2), "utf8");
+                logInfo(`[${formatDaemonTimestamp()}] Wrote heartbeat timeout diagnostic for ${roleId} to .hermit/diagnostics`);
+              } catch (err) {
+                logError(`[${formatDaemonTimestamp()}] Failed to write heartbeat diagnostic: ${String(err)}`);
+              }
+
               // Request abort of the active heartbeat session. This triggers the registered abort handler if set.
               daemonController.abortActiveSession();
             }, ROLE_HEARTBEAT_TIMEOUT_MS);
