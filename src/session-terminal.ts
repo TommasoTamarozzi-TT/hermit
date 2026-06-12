@@ -124,14 +124,14 @@ export function createSessionStreamHandler(
       return;
     }
 
-    if (event.type === "auto_compaction_start") {
+    if (event.type === "compaction_start") {
       const compactionStatus = formatCompactionStatus(event);
       sink.appendToolStatus(compactionStatus);
       sink.showStatus(compactionStatus);
       return;
     }
 
-    if (event.type === "auto_compaction_end") {
+    if (event.type === "compaction_end") {
       if (event.aborted) {
         const abortedStatus = "Compaction aborted";
         sink.appendToolStatus(abortedStatus);

@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthStorage, ModelRegistry } from "@mariozechner/pi-coding-agent";
 
-import { createModelRegistry, ensureSupplementalAnthropicModels } from "../src/anthropic-models.js";
 import { collectModelPreferences, parseModelReference, resolveConfiguredModel } from "../src/model-auth.js";
 
 describe("provider-aware model resolution", () => {
@@ -41,7 +40,7 @@ describe("provider-aware model resolution", () => {
         key: "test-key",
       },
     });
-    const modelRegistry = new ModelRegistry(authStorage);
+    const modelRegistry = ModelRegistry.create(authStorage);
 
     const resolved = resolveConfiguredModel(
       authStorage,
@@ -62,7 +61,7 @@ describe("provider-aware model resolution", () => {
         key: "test-key",
       },
     });
-    const modelRegistry = new ModelRegistry(authStorage);
+    const modelRegistry = ModelRegistry.create(authStorage);
 
     const resolved = resolveConfiguredModel(
       authStorage,
@@ -86,7 +85,7 @@ describe("provider-aware model resolution", () => {
         key: "anthropic-key",
       },
     });
-    const modelRegistry = new ModelRegistry(authStorage);
+    const modelRegistry = ModelRegistry.create(authStorage);
 
     const resolved = resolveConfiguredModel(authStorage, modelRegistry, "", []);
 
@@ -94,64 +93,41 @@ describe("provider-aware model resolution", () => {
     expect([
       "openai/gpt-5.4-pro",
       "openai/gpt-5.4",
-      "anthropic/claude-opus-4-8",
+      "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-sonnet-4-6",
     ]).toContain(`${resolved.model.provider}/${resolved.model.id}`);
   });
 
-  it("makes the supplemental claude-opus-4-8 model resolvable with an Anthropic key", () => {
+  it("resolves the officially supported claude-opus-4-7 model with an Anthropic key", () => {
     const authStorage = AuthStorage.inMemory({
       anthropic: {
         type: "api_key",
         key: "anthropic-key",
       },
     });
-    const modelRegistry = createModelRegistry(authStorage);
+    const modelRegistry = ModelRegistry.create(authStorage);
 
-    const resolved = resolveConfiguredModel(authStorage, modelRegistry, "anthropic/claude-opus-4-8", []);
+    const resolved = resolveConfiguredModel(authStorage, modelRegistry, "anthropic/claude-opus-4-7", []);
 
     expect(resolved.selectionSource).toBe("preferred");
     expect(resolved.model.provider).toBe("anthropic");
-    expect(resolved.model.id).toBe("claude-opus-4-8");
+    expect(resolved.model.id).toBe("claude-opus-4-7");
     expect(resolved.model.api).toBe("anthropic-messages");
   });
 
-  it("prefers claude-opus-4-8 during auto-select once supplemental models are ensured", () => {
+  it("prefers claude-opus-4-7 during auto-select when only Anthropic is configured", () => {
     const authStorage = AuthStorage.inMemory({
       anthropic: {
         type: "api_key",
         key: "anthropic-key",
       },
     });
-    const modelRegistry = createModelRegistry(authStorage);
+    const modelRegistry = ModelRegistry.create(authStorage);
 
     const resolved = resolveConfiguredModel(authStorage, modelRegistry, "", []);
 
     expect(resolved.selectionSource).toBe("best-available");
-    expect(`${resolved.model.provider}/${resolved.model.id}`).toBe("anthropic/claude-opus-4-8");
-  });
-
-  it("does not duplicate or override existing catalog models", () => {
-    const authStorage = AuthStorage.inMemory({
-      anthropic: {
-        type: "api_key",
-        key: "anthropic-key",
-      },
-    });
-    const modelRegistry = new ModelRegistry(authStorage);
-
-    ensureSupplementalAnthropicModels(modelRegistry);
-    ensureSupplementalAnthropicModels(modelRegistry);
-
-    const sonnet = modelRegistry
-      .getAll()
-      .filter((model) => model.provider === "anthropic" && model.id === "claude-sonnet-4-6");
-    expect(sonnet).toHaveLength(1);
-
-    const opus = modelRegistry
-      .getAll()
-      .filter((model) => model.provider === "anthropic" && model.id === "claude-opus-4-8");
-    expect(opus).toHaveLength(1);
+    expect(`${resolved.model.provider}/${resolved.model.id}`).toBe("anthropic/claude-opus-4-7");
   });
 });

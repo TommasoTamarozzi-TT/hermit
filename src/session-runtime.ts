@@ -1,8 +1,9 @@
 import {
   AuthStorage,
   createAgentSession,
-  createCodingTools,
   DefaultResourceLoader,
+  getAgentDir,
+  ModelRegistry,
   SessionManager,
   type AgentSession,
   type ToolDefinition,
@@ -10,7 +11,6 @@ import {
 import path from "node:path";
 
 import { createCustomTools, createHermitTools } from "./agent-tools.js";
-import { createModelRegistry } from "./anthropic-models.js";
 import { DEFAULT_THINKING_LEVEL, HERMIT_ROLE_ID, HERMIT_ROLE_ROOT } from "./constants.js";
 import { resolveConfiguredModel } from "./model-auth.js";
 import { resolveSessionModelPreferences, type ModelRoutingPurpose } from "./runtime-config.js";
@@ -241,7 +241,7 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
 }> {
   normalizeProviderEnvironment();
   const authStorage = AuthStorage.create();
-  const modelRegistry = createModelRegistry(authStorage);
+  const modelRegistry = ModelRegistry.create(authStorage);
   const configuredPreferences = options.modelRoutingPurpose
     ? await resolveSessionModelPreferences(options.root, options.modelRoutingPurpose)
     : undefined;
@@ -293,6 +293,7 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
 
   const loader = new DefaultResourceLoader({
     cwd: options.executionRoot,
+    agentDir: getAgentDir(),
     noExtensions: true,
     additionalSkillPaths: options.skillPaths,
     noPromptTemplates: true,
@@ -316,7 +317,6 @@ async function createSessionCore(options: SessionCoreOptions): Promise<{
     modelRegistry,
     model,
     thinkingLevel: DEFAULT_THINKING_LEVEL,
-    tools: createCodingTools(options.executionRoot),
     customTools: options.customTools,
     resourceLoader: loader,
     sessionManager,

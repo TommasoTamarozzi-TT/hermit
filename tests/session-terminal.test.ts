@@ -114,11 +114,11 @@ describe("createSessionStreamHandler", () => {
       success: true,
     } as never);
     handleEvent({
-      type: "auto_compaction_start",
+      type: "compaction_start",
       reason: "context window limit",
     } as never);
     handleEvent({
-      type: "auto_compaction_end",
+      type: "compaction_end",
       willRetry: true,
     } as never);
 

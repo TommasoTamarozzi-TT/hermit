@@ -232,22 +232,24 @@ Built-in tiers map to these model preferences unless you override them in that s
 ### Anthropic Claude models
 
 With an `ANTHROPIC_API_KEY` configured, Hermit can use any Claude model in the
-`@mariozechner/pi-ai` catalog. Hermit additionally guarantees the latest models
-are selectable even if the installed catalog predates them:
+`@mariozechner/pi-ai` catalog. The newest models with extended ("adaptive")
+thinking are fully supported:
 
-- `anthropic/claude-opus-4-8` (Claude Opus 4.8) — also the preferred Anthropic model during auto-selection
+- `anthropic/claude-opus-4-7` (Claude Opus 4.7) — the preferred Anthropic model during auto-selection
+- `anthropic/claude-opus-4-6` (Claude Opus 4.6)
 - `anthropic/claude-sonnet-4-6` (Claude Sonnet 4.6)
 
 Pin one explicitly with `ROLE_AGENT_MODEL`, for example:
 
 ```bash
-ROLE_AGENT_MODEL=anthropic/claude-opus-4-8 npm run cli -- ask --role <role-id> "..."
+ROLE_AGENT_MODEL=anthropic/claude-opus-4-7 npm run cli -- ask --role <role-id> "..."
 ROLE_AGENT_MODEL=anthropic/claude-sonnet-4-6 npm run cli -- start
 ```
 
-These supplemental definitions live in `src/anthropic-models.ts` and are only a
-safety net: official catalog metadata and any user `~/.pi/agent/models.json`
-overrides for the same model ID always take precedence.
+> Note: only models that the installed `@mariozechner/pi-ai` version knows about
+> can be used. Newer Claude models that require adaptive thinking (e.g. a future
+> `claude-opus-4-8`) will fail with an Anthropic `thinking.type` 400 error until
+> the pi packages are upgraded to a release that adds them.
 
 Common provider API key env vars and matching macOS Keychain accounts:
 
