@@ -401,6 +401,15 @@ const userHighPriorityCount = userRequestedItems.filter((item) => item.priority 
 const userMediumPriorityCount = userRequestedItems.filter((item) => item.priority === "medium").length;
 ---
 <BaseLayout title="Raidyn Virtual Assistent - Explorer">
+  <section class="card home-hero">
+    <div class="home-hero__copy">
+      <span class="home-hero__eyebrow">Head of Operations</span>
+      <h1 class="home-hero__title">Welcome back, Tommaso</h1>
+      <p class="home-hero__subtitle">Jump straight into the latest Head of Operations conversation.</p>
+    </div>
+    <a class="action-button" href="/agents/head-of-operations/conversation">Open latest conversation</a>
+  </section>
+
   {prioritiesHtml && (
     <details class="card foldable-card">
       <summary class="foldable-summary">

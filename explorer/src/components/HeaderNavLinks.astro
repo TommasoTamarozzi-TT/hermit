@@ -17,11 +17,26 @@ const linkClass = mobile ? "nav-link nav-link--stacked" : "nav-link";
 ---
 
 <a class={linkClass} href="/">Home</a>
-<a class={linkClass} href="/agents">Orgchart</a>
-<a class={linkClass} href="/secretariat">Secretariat</a>
-<a class={linkClass} href="/procurement">Procurement</a>
-<a class={linkClass} href="/operational-business">Operational Business</a>
-<a class={linkClass} href="/market-analysis">Market analysis</a>
-<a class={linkClass} href="/hermit-info">Hermit info</a>
+<a class={linkClass} href="/agents">Org Chart</a>
+<a class={linkClass} href="/secretariat">Head Office</a>
+
+{mobile ? (
+  <div class="nav-group nav-group--stacked">
+    <span class="nav-group__label">Operations</span>
+    <a class="nav-link nav-link--stacked nav-link--sub" href="/procurement">Procurement</a>
+    <a class="nav-link nav-link--stacked nav-link--sub" href="/operational-business">Operational Business</a>
+  </div>
+) : (
+  <details class="nav-dropdown">
+    <summary class="nav-link nav-dropdown__summary">Operations</summary>
+    <div class="nav-dropdown__panel">
+      <a class="nav-link nav-link--stacked" href="/procurement">Procurement</a>
+      <a class="nav-link nav-link--stacked" href="/operational-business">Operational Business</a>
+    </div>
+  </details>
+)}
+
+<a class={linkClass} href="/market-analysis">Market Analysis</a>
+<a class={linkClass} href="/hermit-info">System</a>
 {customPageLinks.map((link) => <a class={linkClass} href={link.href}>{link.label}</a>)}
 {roleId && <a class={linkClass} href={`/agents/${roleId}`}>{roleName ?? roleId}</a>}
