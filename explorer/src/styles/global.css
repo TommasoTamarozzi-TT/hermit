@@ -99,7 +99,7 @@
   }
 
   h1 {
-    @apply text-3xl font-semibold tracking-tight sm:text-4xl;
+    @apply text-3xl font-extrabold tracking-tight sm:text-4xl;
     color: var(--color-heading);
   }
 
@@ -257,12 +257,14 @@
   }
 
   .home-hero__eyebrow {
-    @apply block text-[0.68rem] font-semibold uppercase tracking-[0.14em];
+    @apply inline-flex w-fit items-center rounded-[0.3rem] border px-2.5 py-1 font-mono text-[0.66rem] font-semibold uppercase tracking-[0.16em];
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
     color: var(--color-accent);
   }
 
   .home-hero__title {
-    @apply text-xl font-semibold tracking-tight;
+    @apply text-2xl font-extrabold tracking-tight sm:text-3xl;
     color: var(--color-heading);
   }
 
@@ -300,7 +302,7 @@
   }
 
   .section-title {
-    @apply mb-3 text-lg font-semibold tracking-tight;
+    @apply mb-3 inline-flex items-center gap-2.5 text-lg font-bold tracking-tight;
     color: var(--color-heading);
   }
 
@@ -551,8 +553,16 @@
   }
 
   .foldable-title {
-    @apply text-base font-semibold;
+    @apply inline-flex items-center gap-2.5 text-base font-semibold;
     color: var(--color-heading);
+  }
+
+  .foldable-title::before,
+  .section-title::before {
+    content: "";
+    @apply inline-block h-3.5 w-3.5 shrink-0 rounded-[0.2rem] align-[-0.1em];
+    background: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
   }
 
   .foldable-meta {
