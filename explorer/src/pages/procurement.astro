@@ -31,6 +31,7 @@ interface ProgressStage {
 
 interface ProgressFile {
   status?: string;
+  last_update?: string;
   summary?: string;
   scope?: {
     email_since?: string;
@@ -66,6 +67,11 @@ interface SupplierDirectoryFile {
   slack_checked?: boolean;
   method_note?: string;
   sections?: SupplierSection[];
+  last_refresh?: {
+    date?: string;
+    window?: string;
+    by?: string;
+  };
 }
 
 const root = getWorkspaceRoot();
@@ -130,7 +136,13 @@ const summary = scan?.summary ?? [];
 const candidateCount = summary.length;
 const amountCoverageCount = summary.filter((row) => (row.amountMentions?.length ?? 0) > 0).length;
 const spendCoverage = candidateCount > 0 ? (amountCoverageCount / candidateCount) * 100 : 0;
-const lastUpdatedAt = scanStat?.mtime?.toISOString();
+// Prefer the actual refresh timestamps recorded by the procurement workflow over the
+// modification time of the raw domain-scan file, which can lag well behind a real refresh.
+const lastUpdatedAt =
+  supplierDirectory?.last_refresh?.date
+  ?? progress?.last_update
+  ?? supplierDirectory?.generated_at
+  ?? scanStat?.mtime?.toISOString();
 
 const curatedSections = supplierDirectory?.sections ?? [];
 const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + section.suppliers.length, 0);
@@ -185,7 +197,7 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
       <div class="metric-card">
         <span class="label">Last update</span>
         <div class="value value--small">{formatDateTime(lastUpdatedAt)}</div>
-        <div class="subvalue">Latest saved scan artifact</div>
+        <div class="subvalue">Latest recorded supplier-directory refresh</div>
       </div>
     </div>
     {progress?.summary && <p class="meta progress-note">{progress.summary}</p>}
