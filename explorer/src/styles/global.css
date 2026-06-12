@@ -547,7 +547,7 @@
   }
 
   .foldable-meta {
-    @apply text-sm;
+    @apply inline-flex flex-wrap items-center gap-3 text-sm;
     color: var(--color-text-soft);
   }
 

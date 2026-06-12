@@ -43,4 +43,93 @@ if (!renderedPage) {
       })();
     </script>
   )}
+
+  {pageKey === "market-analysis" && (
+    <script is:inline>
+      (() => {
+        const deleteCompany = async (button) => {
+          if (!(button instanceof HTMLButtonElement)) return;
+          const companyId = button.getAttribute("data-company-id") || "";
+          if (!companyId) return;
+          const card = button.closest("[data-company-card]");
+          const name = card?.querySelector(".foldable-title")?.textContent?.trim() || "this company";
+          if (!window.confirm(`Remove "${name}" from market analysis?`)) return;
+
+          button.disabled = true;
+          button.textContent = "Deleting…";
+          try {
+            const response = await fetch("/api/market-analysis/delete", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ companyId }),
+            });
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              throw new Error(payload?.error || "Delete failed.");
+            }
+            if (card instanceof HTMLElement) card.remove();
+          } catch (error) {
+            window.alert(error instanceof Error ? error.message : "Delete failed.");
+            button.disabled = false;
+            button.textContent = "Done / delete";
+          }
+        };
+
+        document.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          const button = target.closest("[data-company-delete]");
+          if (button) {
+            event.preventDefault();
+            event.stopPropagation();
+            void deleteCompany(button);
+          }
+        });
+      })();
+    </script>
+  )}
+
+  {pageKey === "email-templates" && (
+    <script is:inline>
+      (() => {
+        const deleteDraft = async (button) => {
+          if (!(button instanceof HTMLButtonElement)) return;
+          const title = button.getAttribute("data-draft-title") || "";
+          if (!title) return;
+          const card = button.closest("[data-draft-card]");
+          if (!window.confirm(`Remove the "${title}" email draft?`)) return;
+
+          button.disabled = true;
+          button.textContent = "Deleting…";
+          try {
+            const response = await fetch("/api/email-drafts/delete", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ title }),
+            });
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              throw new Error(payload?.error || "Delete failed.");
+            }
+            if (card instanceof HTMLElement) card.remove();
+          } catch (error) {
+            window.alert(error instanceof Error ? error.message : "Delete failed.");
+            button.disabled = false;
+            button.textContent = "Done / delete";
+          }
+        };
+
+        document.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          const button = target.closest("[data-draft-delete]");
+          if (button) {
+            event.preventDefault();
+            event.stopPropagation();
+            void deleteDraft(button);
+          }
+        });
+      })();
+    </script>
+  )}
 </BaseLayout>

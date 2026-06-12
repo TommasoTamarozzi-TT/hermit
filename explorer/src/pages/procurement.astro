@@ -219,7 +219,7 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
       <div class="procurement-section-body">
         <div class="candidate-list">
           {section.suppliers.map((supplier) => (
-            <details class="candidate-card">
+            <details class="candidate-card" data-supplier-card>
               <summary class="candidate-summary">
                 <div>
                   <strong>{supplier.name}</strong>
@@ -227,6 +227,16 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
                 </div>
                 <div class="candidate-summary-metrics">
                   <span>{supplier.total_spend || "Spend unknown"}</span>
+                  <button
+                    type="button"
+                    class="todo-delete-button"
+                    data-supplier-delete
+                    data-section-id={section.id}
+                    data-supplier-name={supplier.name}
+                    aria-label={`Remove ${supplier.name}`}
+                  >
+                    Done / delete
+                  </button>
                 </div>
               </summary>
               <div class="candidate-body">
@@ -274,6 +284,59 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
       </div>
     </details>
   ))}
+
+  <script is:inline>
+    (() => {
+      const deleteSupplier = async (button) => {
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+        const sectionId = button.getAttribute("data-section-id") || "";
+        const name = button.getAttribute("data-supplier-name") || "";
+        if (!sectionId || !name) {
+          return;
+        }
+        if (!window.confirm(`Remove "${name}" from the supplier directory?`)) {
+          return;
+        }
+
+        const card = button.closest("[data-supplier-card]");
+        button.disabled = true;
+        button.textContent = "Deleting…";
+        try {
+          const response = await fetch("/api/procurement-suppliers/delete", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ sectionId, name }),
+          });
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload?.error || "Delete failed.");
+          }
+          if (card instanceof HTMLElement) {
+            card.remove();
+          }
+        } catch (error) {
+          window.alert(error instanceof Error ? error.message : "Delete failed.");
+          button.disabled = false;
+          button.textContent = "Done / delete";
+        }
+      };
+
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+        const button = target.closest("[data-supplier-delete]");
+        if (button) {
+          event.preventDefault();
+          event.stopPropagation();
+          void deleteSupplier(button);
+        }
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
