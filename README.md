@@ -229,6 +229,26 @@ Built-in tiers map to these model preferences unless you override them in that s
 - `workhorse` → `openai/gpt-5-mini` with fallback `openai/gpt-4.1-mini`
 - `heavy` → `openai/gpt-5.4` with fallback `openai/gpt-5-mini`
 
+### Anthropic Claude models
+
+With an `ANTHROPIC_API_KEY` configured, Hermit can use any Claude model in the
+`@mariozechner/pi-ai` catalog. Hermit additionally guarantees the latest models
+are selectable even if the installed catalog predates them:
+
+- `anthropic/claude-opus-4-8` (Claude Opus 4.8) — also the preferred Anthropic model during auto-selection
+- `anthropic/claude-sonnet-4-6` (Claude Sonnet 4.6)
+
+Pin one explicitly with `ROLE_AGENT_MODEL`, for example:
+
+```bash
+ROLE_AGENT_MODEL=anthropic/claude-opus-4-8 npm run cli -- ask --role <role-id> "..."
+ROLE_AGENT_MODEL=anthropic/claude-sonnet-4-6 npm run cli -- start
+```
+
+These supplemental definitions live in `src/anthropic-models.ts` and are only a
+safety net: official catalog metadata and any user `~/.pi/agent/models.json`
+overrides for the same model ID always take precedence.
+
 Common provider API key env vars and matching macOS Keychain accounts:
 
 - `OPENAI_API_KEY` / `openai_api_key`

@@ -2,13 +2,14 @@ import type { Model } from "@mariozechner/pi-ai";
 import { getEnvApiKey } from "@mariozechner/pi-ai";
 import { AuthStorage, ModelRegistry } from "@mariozechner/pi-coding-agent";
 
+import { createModelRegistry } from "./anthropic-models.js";
 import { DEFAULT_FALLBACK_MODELS, DEFAULT_MODEL } from "./constants.js";
 import { normalizeProviderEnvironment } from "./provider-env.js";
 
 /** Standard models per provider, in preference order. Used when no model is configured. */
 const STANDARD_MODELS_PER_PROVIDER: Record<string, readonly string[]> = {
   openai: ["gpt-5.4"],
-  anthropic: ["claude-opus-4-6"],
+  anthropic: ["claude-opus-4-8", "claude-opus-4-6"],
   google: ["gemini-3.1-pro"],
 };
 
@@ -268,7 +269,7 @@ export function assertProviderAwareModelConfigured(): ResolvedAgentModel {
   normalizeProviderEnvironment();
 
   const authStorage = AuthStorage.create();
-  const modelRegistry = new ModelRegistry(authStorage);
+  const modelRegistry = createModelRegistry(authStorage);
   return resolveConfiguredModel(authStorage, modelRegistry);
 }
 
@@ -276,7 +277,7 @@ export function getProviderAwareModelDiagnostics(): ModelConfigurationDiagnostic
   normalizeProviderEnvironment();
 
   const authStorage = AuthStorage.create();
-  const modelRegistry = new ModelRegistry(authStorage);
+  const modelRegistry = createModelRegistry(authStorage);
   const preferences = collectModelPreferences();
 
   try {
