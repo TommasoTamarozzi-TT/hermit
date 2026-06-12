@@ -69,6 +69,15 @@
   html[data-theme="raidyn-black"] {
     --app-background: #000000;
     --color-body-bg: #000000;
+    --color-surface: #000000;
+    --color-surface-muted: #050505;
+    --color-surface-subtle: rgba(8, 8, 8, 0.9);
+    --color-border: rgba(140, 140, 145, 0.32);
+    --color-border-strong: rgba(170, 170, 175, 0.46);
+    --color-input-bg: #050505;
+    --color-code-bg: #050505;
+    --color-pre-bg: #000000;
+    --color-nav-bg: rgba(0, 0, 0, 0.96);
   }
 
   html {
