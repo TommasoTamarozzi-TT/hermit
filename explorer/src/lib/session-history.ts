@@ -312,6 +312,22 @@ function buildConversationEntries(entries: SessionEntry[]): ConversationTimeline
   return timeline;
 }
 
+function formatModelIdentifier(provider?: unknown, model?: unknown): string | undefined {
+  // Prefer explicit provider + model when available
+  if (typeof provider === "string" && typeof model === "string" && provider && model) {
+    return `${provider}/${model}`;
+  }
+  // If model is present as a string, return it
+  if (typeof model === "string" && model) {
+    return model;
+  }
+  // If provider is present, return it
+  if (typeof provider === "string" && provider) {
+    return provider;
+  }
+  return undefined;
+}
+
 export async function loadLatestRoleConversation(role: RoleDefinition): Promise<LatestRoleConversation> {
   const sessionPath = await findLatestSessionPath(role);
   const baseSummary: LatestRoleConversationSummary = {
