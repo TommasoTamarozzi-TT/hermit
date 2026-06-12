@@ -350,13 +350,14 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
   .metric-card {
     padding: 0.9rem 1rem;
     border-radius: 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
   }
 
   .metric-card--primary {
-    border-color: rgba(84, 145, 255, 0.5);
-    box-shadow: 0 0 0 1px rgba(84, 145, 255, 0.2) inset;
+    border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    box-shadow: 0 0 0 1px var(--color-accent-soft) inset;
   }
 
   .label {
@@ -392,9 +393,9 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
 
   .workflow-stages-toggle {
     margin-top: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border);
     border-radius: 0.85rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--color-surface-subtle);
     overflow: hidden;
   }
 
@@ -430,8 +431,8 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
     gap: 1rem;
     padding: 0.85rem 1rem;
     border-radius: 0.75rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
   }
 
   .stage-status {
@@ -444,11 +445,11 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
   }
 
   .stage-status--in_progress {
-    color: #8db8ff;
+    color: var(--color-accent);
   }
 
   .stage-status--pending {
-    color: #d1d5db;
+    color: var(--color-text-soft);
   }
 
   .procurement-section {
@@ -486,9 +487,9 @@ const curatedSupplierCount = curatedSections.reduce((sum, section) => sum + sect
   }
 
   .candidate-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border);
     border-radius: 0.85rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--color-surface-muted);
     overflow: hidden;
   }
 
