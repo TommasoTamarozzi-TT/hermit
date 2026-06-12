@@ -54,7 +54,7 @@ const [todayHtml, unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promi
   </div>
 
   <section class="file-section card">
-    <h2>OpenAI usage today</h2>
+    <h2>AI model usage today</h2>
     <div class="usage-grid">
       <div class="usage-item">
         <span class="label">Estimated cost</span>
@@ -65,7 +65,7 @@ const [todayHtml, unreadHtml, calendarHtml, slackHtml, digestHtml] = await Promi
         <div class="value">{formatInteger(todayTotals.tokens)}</div>
       </div>
     </div>
-    <p class="meta usage-meta">Today so far in {timeZone}. Counted from {formatInteger(todayTotals.entries)} recorded OpenAI usage entries across Hermit and role-agent sessions.</p>
+    <p class="meta usage-meta">Today so far in {timeZone}. Counted from {formatInteger(todayTotals.entries)} recorded model usage entries (OpenAI and Anthropic) across Hermit and role-agent sessions.</p>
   </section>
 
   <details class="file-section card foldable-card" open>

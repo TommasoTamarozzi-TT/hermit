@@ -62,9 +62,13 @@ function extractUsageEntry(record: any): { timestamp: string; cost: number; toke
     return undefined;
   }
 
-  const provider = record?.message?.provider ?? record?.provider;
-  const api = record?.message?.api ?? record?.api ?? "";
-  if (provider !== "openai" && !String(api).includes("openai")) {
+  // Count spend from all billable model providers (OpenAI and Anthropic).
+  // Local/free providers (e.g. Gemma) record zero cost, so they do not affect totals.
+  const provider = String(record?.message?.provider ?? record?.provider ?? "").toLowerCase();
+  const api = String(record?.message?.api ?? record?.api ?? "").toLowerCase();
+  const billableProviders = ["openai", "anthropic"];
+  const isBillable = billableProviders.some((name) => provider.includes(name) || api.includes(name));
+  if (!isBillable) {
     return undefined;
   }
 
