@@ -5,13 +5,26 @@ import type { APIRoute } from "astro";
 
 import { getWorkspaceRoot } from "../../../lib/workspace.js";
 
-const draftsPath = path.join(
-  getWorkspaceRoot(),
-  "entities",
-  "work-items",
-  "wi-set-up-operational-business-email-templates",
-  "email-templates.md",
-);
+// Whitelisted delete targets. Each maps to the markdown file whose top-level
+// "## <title>" sections can be removed one by one from the Explorer.
+const DELETE_TARGETS: Record<string, { workItemId: string; fileName: string }> = {
+  templates: {
+    workItemId: "wi-set-up-operational-business-email-templates",
+    fileName: "email-templates.md",
+  },
+  drafts: {
+    workItemId: "wi-update-sales-pipeline-from-last-2-months-email-sweep",
+    fileName: "email-drafts.md",
+  },
+};
+
+function resolveTargetPath(target: string): string | undefined {
+  const entry = DELETE_TARGETS[target];
+  if (!entry) {
+    return undefined;
+  }
+  return path.join(getWorkspaceRoot(), "entities", "work-items", entry.workItemId, entry.fileName);
+}
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -21,31 +34,41 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json().catch(() => null);
     const title = typeof body?.title === "string" ? body.title.trim() : "";
+    // Default to "templates" for backward compatibility with older clients.
+    const target = typeof body?.target === "string" && body.target.trim() ? body.target.trim() : "templates";
 
     if (!title) {
-      return new Response(JSON.stringify({ error: "Missing draft title." }), {
+      return new Response(JSON.stringify({ error: "Missing item title." }), {
         status: 400,
         headers: { "content-type": "application/json" },
       });
     }
 
-    const markdown = await fs.readFile(draftsPath, "utf8");
-    const lines = markdown.split("\n");
-    const target = normalize(title);
+    const filePath = resolveTargetPath(target);
+    if (!filePath) {
+      return new Response(JSON.stringify({ error: `Unknown delete target: ${target}.` }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
 
-    // A draft is a top-level "## <language>" section. Remove from its heading
-    // up to (but not including) the next "## " heading or end of file.
+    const markdown = await fs.readFile(filePath, "utf8");
+    const lines = markdown.split("\n");
+    const wanted = normalize(title);
+
+    // An item is a top-level "## <title>" section. Remove from its heading up to
+    // (but not including) the next "## " heading or the end of the file.
     let startIndex = -1;
     for (let i = 0; i < lines.length; i += 1) {
       const match = lines[i].match(/^##\s+(.+?)\s*$/);
-      if (match && normalize(match[1]) === target) {
+      if (match && normalize(match[1]) === wanted) {
         startIndex = i;
         break;
       }
     }
 
     if (startIndex === -1) {
-      return new Response(JSON.stringify({ error: "Draft section not found." }), {
+      return new Response(JSON.stringify({ error: "Section not found." }), {
         status: 404,
         headers: { "content-type": "application/json" },
       });
@@ -62,9 +85,9 @@ export const POST: APIRoute = async ({ request }) => {
     const nextLines = [...lines.slice(0, startIndex), ...lines.slice(endIndex)];
     const nextMarkdown = `${nextLines.join("\n").replace(/\n{3,}/g, "\n\n").replace(/\s+$/, "")}\n`;
 
-    await fs.writeFile(draftsPath, nextMarkdown, "utf8");
+    await fs.writeFile(filePath, nextMarkdown, "utf8");
 
-    return new Response(JSON.stringify({ ok: true, removedTitle: title }), {
+    return new Response(JSON.stringify({ ok: true, removedTitle: title, target }), {
       status: 200,
       headers: { "content-type": "application/json" },
     });

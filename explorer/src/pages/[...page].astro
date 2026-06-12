@@ -89,47 +89,47 @@ if (!renderedPage) {
     </script>
   )}
 
-  {pageKey === "email-templates" && (
-    <script is:inline>
-      (() => {
-        const deleteDraft = async (button) => {
-          if (!(button instanceof HTMLButtonElement)) return;
-          const title = button.getAttribute("data-draft-title") || "";
-          if (!title) return;
-          const card = button.closest("[data-draft-card]");
-          if (!window.confirm(`Remove the "${title}" email draft?`)) return;
+  <script is:inline>
+    (() => {
+      const deleteDraft = async (button) => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const title = button.getAttribute("data-draft-title") || "";
+        if (!title) return;
+        const target = button.getAttribute("data-draft-target") || "templates";
+        const noun = target === "drafts" ? "email draft" : "email template";
+        const card = button.closest("[data-draft-card]");
+        if (!window.confirm(`Remove the "${title}" ${noun}?`)) return;
 
-          button.disabled = true;
-          button.textContent = "Deleting…";
-          try {
-            const response = await fetch("/api/email-drafts/delete", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ title }),
-            });
-            if (!response.ok) {
-              const payload = await response.json().catch(() => ({}));
-              throw new Error(payload?.error || "Delete failed.");
-            }
-            if (card instanceof HTMLElement) card.remove();
-          } catch (error) {
-            window.alert(error instanceof Error ? error.message : "Delete failed.");
-            button.disabled = false;
-            button.textContent = "Done / delete";
+        button.disabled = true;
+        button.textContent = "Deleting…";
+        try {
+          const response = await fetch("/api/email-drafts/delete", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ title, target }),
+          });
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload?.error || "Delete failed.");
           }
-        };
+          if (card instanceof HTMLElement) card.remove();
+        } catch (error) {
+          window.alert(error instanceof Error ? error.message : "Delete failed.");
+          button.disabled = false;
+          button.textContent = "Done / delete";
+        }
+      };
 
-        document.addEventListener("click", (event) => {
-          const target = event.target;
-          if (!(target instanceof Element)) return;
-          const button = target.closest("[data-draft-delete]");
-          if (button) {
-            event.preventDefault();
-            event.stopPropagation();
-            void deleteDraft(button);
-          }
-        });
-      })();
-    </script>
-  )}
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const button = target.closest("[data-draft-delete]");
+        if (button) {
+          event.preventDefault();
+          event.stopPropagation();
+          void deleteDraft(button);
+        }
+      });
+    })();
+  </script>
 </BaseLayout>
