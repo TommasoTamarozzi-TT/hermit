@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import { promises as fs } from "node:fs";
+import { mkdirSync, promises as fs, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
@@ -477,14 +477,14 @@ export async function runHeartbeatDaemonLoop(options: {
               try {
                 const diagDir = path.join(options.root, ".hermit", "diagnostics");
                 // synchronous write: this runs inside the daemon; keep it small and non-blocking.
-                fs.mkdirSync(diagDir, { recursive: true });
+                mkdirSync(diagDir, { recursive: true });
                 const snapshot = {
                   timestamp: new Date().toISOString(),
                   roleId,
                   reason: "heartbeat_timeout",
                   sessionPlan: cyclePlan.mode,
                 };
-                fs.writeFileSync(path.join(diagDir, `heartbeat-timeout-${roleId}-${Date.now()}.json`), JSON.stringify(snapshot, null, 2), "utf8");
+                writeFileSync(path.join(diagDir, `heartbeat-timeout-${roleId}-${Date.now()}.json`), JSON.stringify(snapshot, null, 2), "utf8");
                 logInfo(`[${formatDaemonTimestamp()}] Wrote heartbeat timeout diagnostic for ${roleId} to .hermit/diagnostics`);
               } catch (err) {
                 logError(`[${formatDaemonTimestamp()}] Failed to write heartbeat diagnostic: ${String(err)}`);
