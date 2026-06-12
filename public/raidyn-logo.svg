@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Raidyn">
+  <!--
+    Interim Raidyn-style logomark (orange on transparent).
+    Swap this file with the official Raidyn logo (same path /raidyn-logo.svg)
+    to get an exact brand match; the header references it by URL.
+  -->
+  <defs>
+    <linearGradient id="raidynOrange" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a2b"/>
+      <stop offset="1" stop-color="#f9530c"/>
+    </linearGradient>
+  </defs>
+  <!-- Ascending angular "signal" bars -->
+  <path fill="url(#raidynOrange)" d="M6 30h6v12H6z"/>
+  <path fill="url(#raidynOrange)" d="M17 21h6v21h-6z"/>
+  <path fill="url(#raidynOrange)" d="M28 12h6v30h-6z"/>
+  <!-- Forward wedge accent -->
+  <path fill="url(#raidynOrange)" d="M38 6l6 0-10 16-6 0z"/>
+</svg>
