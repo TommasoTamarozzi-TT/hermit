@@ -159,6 +159,124 @@ function addGeneralFinding(findings: DoctorFinding[], level: DoctorFinding["leve
   findings.push({ level, kind: "general", message });
 }
 
+const FRONTMATTER_FENCE = /^---\s*$/;
+// Values that are already quoted, or that start with a YAML flow/typed indicator,
+// are interpreted explicitly and must not be flagged.
+const SAFE_FRONTMATTER_VALUE_START = /^["'[{|>&*!#]/;
+// Directories that should never be walked when linting workspace markdown.
+const FRONTMATTER_LINT_SKIP_DIRS = new Set(["node_modules", ".git", "dist", "coverage", ".npm-cache"]);
+
+interface FrontmatterColonIssue {
+  lineNumber: number;
+  key: string;
+  text: string;
+}
+
+function extractFrontmatterLines(content: string): { line: string; number: number }[] | undefined {
+  const lines = content.split(/\r?\n/);
+  if (!FRONTMATTER_FENCE.test(lines[0] ?? "")) {
+    return undefined;
+  }
+
+  const block: { line: string; number: number }[] = [];
+  for (let index = 1; index < lines.length; index += 1) {
+    if (FRONTMATTER_FENCE.test(lines[index] ?? "")) {
+      return block;
+    }
+    block.push({ line: lines[index] ?? "", number: index + 1 });
+  }
+
+  // No closing fence: not a valid frontmatter block, skip linting.
+  return undefined;
+}
+
+function frontmatterValueIsRisky(rawValue: string): boolean {
+  const value = rawValue.trim();
+  if (!value || SAFE_FRONTMATTER_VALUE_START.test(value)) {
+    return false;
+  }
+  // YAML starts a nested mapping when an unquoted scalar contains a colon
+  // followed by whitespace (or a trailing colon). URLs (http://) and timestamps
+  // (11:38:15) use colons without a following space and are safe.
+  return /:\s/.test(value) || /:$/.test(value);
+}
+
+/**
+ * Detect unquoted frontmatter scalars whose value contains a colon followed by
+ * whitespace. These break YAML parsing (gray-matter throws), and the common fix
+ * is to wrap the value in quotes.
+ */
+function detectUnquotedColonFrontmatter(content: string): FrontmatterColonIssue[] {
+  const block = extractFrontmatterLines(content);
+  if (!block) {
+    return [];
+  }
+
+  const issues: FrontmatterColonIssue[] = [];
+  for (const { line, number } of block) {
+    // "key: value" or "- key: value"
+    const mappingMatch = line.match(/^\s*(?:-\s+)?([A-Za-z0-9_-]+):\s+(\S.*)$/);
+    if (mappingMatch) {
+      const [, key, value] = mappingMatch;
+      if (frontmatterValueIsRisky(value ?? "")) {
+        issues.push({ lineNumber: number, key: key ?? "?", text: line.trim() });
+      }
+      continue;
+    }
+
+    // "- scalar list item"
+    const listMatch = line.match(/^\s*-\s+(\S.*)$/);
+    if (listMatch && frontmatterValueIsRisky(listMatch[1] ?? "")) {
+      issues.push({ lineNumber: number, key: "-", text: line.trim() });
+    }
+  }
+
+  return issues;
+}
+
+async function lintFrontmatterColons(findings: DoctorFinding[], root: string): Promise<void> {
+  const walk = async (dir: string): Promise<void> => {
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (!FRONTMATTER_LINT_SKIP_DIRS.has(entry.name)) {
+          await walk(fullPath);
+        }
+        continue;
+      }
+
+      if (!entry.isFile() || !entry.name.endsWith(".md")) {
+        continue;
+      }
+
+      let content: string;
+      try {
+        content = await fs.readFile(fullPath, "utf8");
+      } catch {
+        continue;
+      }
+
+      for (const issue of detectUnquotedColonFrontmatter(content)) {
+        const relativePath = path.relative(root, fullPath) || fullPath;
+        addGeneralFinding(
+          findings,
+          "warning",
+          `${relativePath} frontmatter line ${issue.lineNumber} has an unquoted value containing a colon, which can break YAML parsing. Wrap the value in quotes (e.g. \`${issue.key}: "..."\`). Offending line: ${issue.text}`,
+        );
+      }
+    }
+  };
+
+  await walk(root);
+}
+
 function describeMarkdownLoadError(filePath: string, error: unknown): string {
   const code = error && typeof error === "object" && "code" in error ? (error as NodeJS.ErrnoException).code : undefined;
   if (code === "ENOENT") return `${filePath} is missing or unreadable.`;
@@ -313,6 +431,7 @@ export async function runDoctor(root: string, roleId: string): Promise<boolean> 
   }
 
   await validateEntityDefsFile(findings, root);
+  await lintFrontmatterColons(findings, root);
 
   if (isHermitRoleId(roleId)) {
     await validateHermitAgentFiles(findings, root, templatePlaceholderCache);
@@ -400,7 +519,16 @@ export async function runDoctor(root: string, roleId: string): Promise<boolean> 
     }
   }
 
-  const entities = await scanEntities(root, role);
+  let entities: Awaited<ReturnType<typeof scanEntities>> = [];
+  try {
+    entities = await scanEntities(root, role);
+  } catch (error) {
+    addGeneralFinding(
+      findings,
+      "error",
+      error instanceof Error ? error.message : "Failed to scan entities.",
+    );
+  }
   const seenIds = new Set<string>();
   let hasDuplicateIds = false;
 

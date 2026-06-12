@@ -143,6 +143,44 @@ Broken frontmatter example.
     }
   });
 
+  it("flags unquoted frontmatter values containing a colon with an actionable hint", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "doctor-frontmatter-colon-"));
+
+    try {
+      seedRoleWorkspace(root, ["role-a"]);
+      const role = await loadRole(root, "role-a");
+      await ensureWorkspaceScaffold(root, role);
+      writeSharedEntityRecord(root);
+
+      writeFileSync(
+        path.join(root, "agents", "role-a", "agent", "record.md"),
+        `---
+id: role-a-agent
+type: agent
+name: Explorer redesign: Raidyn look, cleaner tabs
+updated_at: 2026-03-08T12:00:00.000Z
+---
+
+## Summary
+
+Unquoted colon in the name field.
+`,
+      );
+
+      const result = await runDoctor(root, "role-a");
+      const logged = consoleSpy.log.mock.calls.map((c) => c[0] as string);
+      expect(result).toBe(true);
+      expect(
+        logged.some(
+          (m) => m.includes("unquoted value containing a colon") && m.includes('name: "..."'),
+        ),
+      ).toBe(true);
+      expect(logged.some((m) => m.includes("agents/role-a/agent/record.md frontmatter line 4"))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("fails when entity-defs/entities.md has body content but no frontmatter entities list", async () => {
     const root = mkdtempSync(path.join(tmpdir(), "doctor-entity-defs-shape-"));
 
