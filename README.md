@@ -235,21 +235,26 @@ With an `ANTHROPIC_API_KEY` configured, Hermit can use any Claude model in the
 `@mariozechner/pi-ai` catalog. The newest models with extended ("adaptive")
 thinking are fully supported:
 
-- `anthropic/claude-opus-4-7` (Claude Opus 4.7) — the preferred Anthropic model during auto-selection
+- `anthropic/claude-opus-4-8` (Claude Opus 4.8) — the preferred Anthropic model during auto-selection
+- `anthropic/claude-opus-4-7` (Claude Opus 4.7)
 - `anthropic/claude-opus-4-6` (Claude Opus 4.6)
 - `anthropic/claude-sonnet-4-6` (Claude Sonnet 4.6)
 
 Pin one explicitly with `ROLE_AGENT_MODEL`, for example:
 
 ```bash
-ROLE_AGENT_MODEL=anthropic/claude-opus-4-7 npm run cli -- ask --role <role-id> "..."
+ROLE_AGENT_MODEL=anthropic/claude-opus-4-8 npm run cli -- ask --role <role-id> "..."
 ROLE_AGENT_MODEL=anthropic/claude-sonnet-4-6 npm run cli -- start
 ```
 
-> Note: only models that the installed `@mariozechner/pi-ai` version knows about
-> can be used. Newer Claude models that require adaptive thinking (e.g. a future
-> `claude-opus-4-8`) will fail with an Anthropic `thinking.type` 400 error until
-> the pi packages are upgraded to a release that adds them.
+> Note on `claude-opus-4-8`: the installed `@mariozechner/pi-ai@0.73.1` does not
+> ship this model. Hermit adds it in two places: `src/anthropic-models.ts`
+> registers the model metadata so it is selectable, and
+> `patches/@mariozechner+pi-ai+0.73.1.patch` teaches the Anthropic provider to
+> send adaptive thinking (`thinking.type: "adaptive"`) for it. The patch is
+> reapplied automatically on `npm install` via the `postinstall` →
+> `patch-package` hook. When pi-ai ships official `claude-opus-4-8` metadata,
+> both the supplemental entry and the patch become redundant and can be removed.
 
 Common provider API key env vars and matching macOS Keychain accounts:
 

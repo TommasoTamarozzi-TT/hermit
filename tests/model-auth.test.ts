@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthStorage, ModelRegistry } from "@mariozechner/pi-coding-agent";
 
+import { createModelRegistry } from "../src/anthropic-models.js";
 import { collectModelPreferences, parseModelReference, resolveConfiguredModel } from "../src/model-auth.js";
 
 describe("provider-aware model resolution", () => {
@@ -93,10 +94,31 @@ describe("provider-aware model resolution", () => {
     expect([
       "openai/gpt-5.4-pro",
       "openai/gpt-5.4",
+      "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-sonnet-4-6",
     ]).toContain(`${resolved.model.provider}/${resolved.model.id}`);
+  });
+
+  it("makes the supplemental claude-opus-4-8 model resolvable and preferred via createModelRegistry", () => {
+    const authStorage = AuthStorage.inMemory({
+      anthropic: {
+        type: "api_key",
+        key: "anthropic-key",
+      },
+    });
+    const modelRegistry = createModelRegistry(authStorage);
+
+    const pinned = resolveConfiguredModel(authStorage, modelRegistry, "anthropic/claude-opus-4-8", []);
+    expect(pinned.selectionSource).toBe("preferred");
+    expect(pinned.model.id).toBe("claude-opus-4-8");
+    expect(pinned.model.api).toBe("anthropic-messages");
+    expect(pinned.model.reasoning).toBe(true);
+
+    const auto = resolveConfiguredModel(authStorage, modelRegistry, "", []);
+    expect(auto.selectionSource).toBe("best-available");
+    expect(`${auto.model.provider}/${auto.model.id}`).toBe("anthropic/claude-opus-4-8");
   });
 
   it("resolves the officially supported claude-opus-4-7 model with an Anthropic key", () => {
