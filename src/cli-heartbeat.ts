@@ -21,7 +21,7 @@ import {
   runHeartbeatCycle,
 } from "./heartbeat-daemon.js";
 import { listRoleIds, loadRole } from "./roles.js";
-import { resolveHeartbeatSchedule, loadRuntimeConfig } from "./runtime-config.js";
+import { resolveHeartbeatSchedule, loadRuntimeConfig, resolveSessionModelPreferences } from "./runtime-config.js";
 import {
   DEFAULT_HEARTBEAT_PROMPT,
   HERMIT_STRATEGIC_REVIEW_PROMPT,
@@ -335,19 +335,33 @@ export async function runHeartbeatDaemonLoop(options: {
     );
 
     // Ensure purpose-specific heartbeat routing from workspace runtime config is visible to
-    // any child processes or internal resolution that rely on env vars. If the workspace
-    // runtime.json defines a default tier for `heartbeat` and no purpose-specific env
-    // override exists, export it to process.env so background turns do not fall back to
-    // the generic interactive model.
+    // any child processes or internal resolution that rely on env vars. Prefer a concrete
+    // purpose-specific model if available; fall back to exporting the configured tier.
     try {
-      const runtimeCfg = await loadRuntimeConfig(options.root);
-      const configuredHeartbeatTier = runtimeCfg.modelRouting?.defaults?.heartbeat;
-      if (configuredHeartbeatTier && !process.env.ROLE_HEARTBEAT_MODEL && !process.env.ROLE_HEARTBEAT_TIER) {
-        process.env.ROLE_HEARTBEAT_TIER = configuredHeartbeatTier;
-        logInfo(`[${formatDaemonTimestamp()}] Applied runtime-config heartbeat tier override: ROLE_HEARTBEAT_TIER=${configuredHeartbeatTier}`);
+      // If an explicit heartbeat model or tier already exists in env, do not override.
+      if (!process.env.ROLE_HEARTBEAT_MODEL && !process.env.ROLE_HEARTBEAT_TIER) {
+        const resolved = await resolveSessionModelPreferences(options.root, "heartbeat");
+        if (resolved && resolved.preferredModel) {
+          process.env.ROLE_HEARTBEAT_MODEL = resolved.preferredModel;
+          if (resolved.fallbackModels && resolved.fallbackModels.length > 0) {
+            process.env.ROLE_HEARTBEAT_FALLBACK_MODELS = resolved.fallbackModels.join(",");
+          }
+          logInfo(
+            `[${formatDaemonTimestamp()}] Applied runtime-config heartbeat model override: ROLE_HEARTBEAT_MODEL=${process.env.ROLE_HEARTBEAT_MODEL}`,
+          );
+        } else {
+          // If no concrete model resolved, fall back to exporting the runtime-config tier (if any)
+          const runtimeCfg = await loadRuntimeConfig(options.root);
+          const configuredHeartbeatTier = runtimeCfg.modelRouting?.defaults?.heartbeat;
+          if (configuredHeartbeatTier) {
+            process.env.ROLE_HEARTBEAT_TIER = configuredHeartbeatTier;
+            logInfo(
+              `[${formatDaemonTimestamp()}] Applied runtime-config heartbeat tier override: ROLE_HEARTBEAT_TIER=${configuredHeartbeatTier}`,
+            );
+          }
+        }
       }
     } catch (err) {
-      // Non-fatal: if runtime config cannot be read, continue with existing environment.
       logInfo(`[${formatDaemonTimestamp()}] Warning: failed to read runtime config for heartbeat routing: ${String(err)}`);
     }
 
