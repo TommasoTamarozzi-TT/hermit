@@ -453,6 +453,19 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
               <div class="todo-toolbar">
                 <p class="meta">Categories start closed. <strong>Done / delete</strong> removes the item from the real user-requested todo list immediately.</p>
               </div>
+              <form class="todo-add-form" data-user-todo-add-form>
+                <input
+                  type="text"
+                  class="todo-add-input"
+                  data-user-todo-add-input
+                  name="newTodo"
+                  maxlength="200"
+                  placeholder="Add a user-requested to-do…"
+                  aria-label="Add a user-requested to-do"
+                  autocomplete="off"
+                />
+                <button type="submit" class="action-button todo-add-button" data-user-todo-add-button>Add to-do</button>
+              </form>
               <div class="todo-category-grid">
                 {userRequestedCategories.map((category) => (
                   <details class="todo-category-card foldable-card" data-user-category-id={category.id}>
@@ -646,6 +659,55 @@ const userMediumPriorityCount = userRequestedItems.filter((item) => item.priorit
           void deleteTodo(deleteButton);
         }
       });
+
+      const addForm = document.querySelector("[data-user-todo-add-form]");
+      const addInput = document.querySelector("[data-user-todo-add-input]");
+      const addButton = document.querySelector("[data-user-todo-add-button]");
+
+      const addTodo = async () => {
+        if (!(addInput instanceof HTMLInputElement)) {
+          return;
+        }
+        const label = addInput.value.trim();
+        if (!label) {
+          return;
+        }
+
+        if (addButton instanceof HTMLButtonElement) {
+          addButton.disabled = true;
+          addButton.textContent = "Adding…";
+        }
+
+        try {
+          const response = await fetch("/api/secretary-todos/add", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ label }),
+          });
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload?.error || "Add failed.");
+          }
+
+          // Reload so the new item is rendered into the correct category.
+          window.location.reload();
+        } catch (error) {
+          window.alert(error instanceof Error ? error.message : "Add failed.");
+          if (addButton instanceof HTMLButtonElement) {
+            addButton.disabled = false;
+            addButton.textContent = "Add to-do";
+          }
+        }
+      };
+
+      if (addForm instanceof HTMLFormElement) {
+        addForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          void addTodo();
+        });
+      }
 
       updateCategoryVisibility();
       updateCounts();

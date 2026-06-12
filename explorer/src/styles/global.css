@@ -36,33 +36,33 @@
 
   html[data-theme="raidyn"] {
     color-scheme: dark;
-    --app-background: radial-gradient(circle at top, rgba(249, 115, 22, 0.18), transparent 34%), linear-gradient(to bottom, #17120e, #0e0b09);
-    --color-body-bg: #0e0b09;
-    --color-surface: #1a140f;
-    --color-surface-muted: #241b14;
-    --color-surface-subtle: rgba(36, 27, 20, 0.88);
-    --color-border: rgba(120, 77, 41, 0.55);
-    --color-border-strong: #784d29;
-    --color-text: #f5ebe3;
-    --color-text-soft: #cfb29c;
-    --color-heading: #fff7ed;
+    --app-background: radial-gradient(circle at top, rgba(249, 115, 22, 0.14), transparent 38%), linear-gradient(to bottom, #0c0c0d, #060606);
+    --color-body-bg: #060606;
+    --color-surface: #131314;
+    --color-surface-muted: #1b1b1d;
+    --color-surface-subtle: rgba(27, 27, 29, 0.88);
+    --color-border: rgba(120, 120, 124, 0.26);
+    --color-border-strong: rgba(160, 160, 165, 0.38);
+    --color-text: #ededee;
+    --color-text-soft: #a3a3a8;
+    --color-heading: #fafafa;
     --color-link: #fb923c;
     --color-link-hover: #fdba74;
     --color-accent: #f97316;
-    --color-accent-soft: rgba(249, 115, 22, 0.2);
-    --color-nav-bg: rgba(10, 8, 7, 0.92);
-    --color-nav-border: rgba(251, 146, 60, 0.18);
-    --color-nav-text: #f3d5c0;
-    --color-nav-hover-text: #fff7ed;
+    --color-accent-soft: rgba(249, 115, 22, 0.18);
+    --color-nav-bg: rgba(8, 8, 9, 0.92);
+    --color-nav-border: rgba(249, 115, 22, 0.16);
+    --color-nav-text: #d4d4d8;
+    --color-nav-hover-text: #ffffff;
     --color-nav-hover-bg: rgba(249, 115, 22, 0.16);
-    --color-brand: #fff7ed;
-    --color-input-bg: #241b14;
+    --color-brand: #fafafa;
+    --color-input-bg: #1b1b1d;
     --color-selection-bg: rgba(249, 115, 22, 0.35);
-    --color-selection-text: #fff7ed;
-    --color-table-hover: rgba(249, 115, 22, 0.08);
-    --color-code-bg: #2a2018;
-    --color-pre-bg: #241b14;
-    --color-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.35);
+    --color-selection-text: #ffffff;
+    --color-table-hover: rgba(249, 115, 22, 0.07);
+    --color-code-bg: #1b1b1d;
+    --color-pre-bg: #161617;
+    --color-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.45);
   }
 
   html {
@@ -689,23 +689,31 @@
   }
 
   .action-button {
-    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium no-underline transition;
-    border: 1px solid color-mix(in srgb, var(--color-accent) 32%, var(--color-border));
-    background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
-    color: var(--color-heading);
+    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold no-underline transition;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #1a0e02;
   }
 
   .action-button:hover {
-    border-color: var(--color-accent);
-    background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
-    color: var(--color-heading);
+    border-color: var(--color-link-hover);
+    background: var(--color-link-hover);
+    color: #1a0e02;
     transform: translateY(-1px);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-accent) 28%, transparent);
   }
 
   .action-button--secondary {
-    border-color: var(--color-border);
-    background: var(--color-surface-muted);
+    border-color: var(--color-border-strong);
+    background: transparent;
     color: var(--color-text);
+  }
+
+  .action-button--secondary:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-heading);
+    box-shadow: none;
   }
 
   .home-todo-card {
@@ -771,6 +779,26 @@
   .todo-delete-button:hover {
     border-color: var(--color-accent);
     background: color-mix(in srgb, var(--color-accent) 10%, var(--color-input-bg));
+  }
+
+  .todo-add-form {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .todo-add-input {
+    @apply min-w-[16rem] flex-1 rounded-full border px-4 py-2 text-sm outline-none transition;
+    border-color: var(--color-border-strong);
+    background: var(--color-input-bg);
+    color: var(--color-text);
+  }
+
+  .todo-add-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px var(--color-accent-soft);
+  }
+
+  .todo-add-button {
+    @apply shrink-0;
   }
 
   .todo-category-grid {
